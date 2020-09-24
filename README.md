@@ -65,7 +65,10 @@ $ systemctl reload apache2
 $ a2vhost --list
 ~~~
 
-In the end we got this config file /etc/apache2/sites-enabled/dev.sysattack.com.conf :
+
+
+
+In the end we got this config file <details><summary>/etc/apache2/sites-enabled/dev.sysattack.com.conf</summary>
 ~~~
 <VirtualHost *:443> 
     ServerName dev.sysattack.com 
@@ -87,6 +90,7 @@ In the end we got this config file /etc/apache2/sites-enabled/dev.sysattack.com.
     RewriteRule (.*) https://%{SERVER_NAME}$1 [R=301,L] 
 </VirtualHost> 
 ~~~
+</details>
 
 
 ## a2conf utility
