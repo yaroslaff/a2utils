@@ -1,11 +1,16 @@
 
 [[_TOC_]]
 
-# a2utils package content
-- `a2conf` - CLI script to query apache2 config (e.g. get DocumentRoot or get all hostnames for specific VirtualHost)
-- `a2certbot.py` - CLI script to diagnose problems with Apache2 VirtualHost and LetsEncrypt certificates and make SSL sites easily
-- `a2okerr.py` - CLI script to generate indicators for SSL VirtualHosts in [okerr](https://okerr.com/) monitoring system.
+# a2utils 
 
+Package consist of few CLI utilities (based on [a2conf](https://gitlab.com/yaroslaff/a2conf) library)
+
+- `a2conf` -  query apache2 config (e.g. get DocumentRoot or get all hostnames for specific VirtualHost)
+- `a2certbot` - diagnose problems with Apache2 VirtualHost and LetsEncrypt certificates and make SSL sites easily
+- `a2vhost` - manipulate apache2 VirtualHosts
+- `a2okerr` - generate indicators for SSL VirtualHosts in [okerr](https://okerr.com/) monitoring system.
+
+All utilities 
 
 # Installation
 Usual simple way:
@@ -21,7 +26,10 @@ If using git sources (without installing), work from root dir of repo and do `ex
 
 
 # CLI utilities
-## a2conf.py utility
+
+## a2vhost
+
+## a2conf utility
 ### Examples
 
 For all examples we will use file 
@@ -68,15 +76,15 @@ Host: example.com Root: /var/www/example Cert: /etc/letsencrypt/live/example.com
 
 You can get list of all available tokens for `--vhfmt` option in verbose mode (`-v` option).
 
-## a2certbot.py
-a2certbot.py utility used to quickly detect common [LetsEncrypt](https://letsencrypt.org/) configuration errors such as:
+## a2certbot
+a2certbot utility used to quickly detect common [LetsEncrypt](https://letsencrypt.org/) configuration errors such as:
 - DocumentRoot mismatch between VirtualHost and LetsEncrypt renew config file (e.g. if someone moved site content)
 - RewriteRule or Redirect apache directives preventing verification
 - DNS record points to other host or not exists at all
-- And **ANY OTHER** problem (such as using wrong certificate path in apache or whatever). `a2certbot.py` 
-simulates HTTP verification (If LetsEncrypt verification fails, `a2certbot.py` will fail too, and vice versa).
+- And **ANY OTHER** problem (such as using wrong certificate path in apache or whatever). `a2certbot` 
+simulates HTTP verification (If LetsEncrypt verification fails, `a2certbot` will fail too, and vice versa).
 
-a2certbot.py does not calls LetsEncrypt servers for verification, so if you will use a2certbot.py to verify your 
+a2certbot does not calls LetsEncrypt servers for verification, so if you will use a2certbot to verify your 
 configuration, you will not hit [failed validation limit](https://letsencrypt.org/docs/rate-limits/) 
 (*5 failures per account, per hostname, per hour* at moment) and will not be blacklisted on LetsEncrypt site.
 
@@ -85,7 +93,7 @@ configuration, you will not hit [failed validation limit](https://letsencrypt.or
 Before requesting new certificates:
 ~~~shell
 # Verify configuration for website for which you want to request certificate for first time.
-bin/a2certbot.py --prepare -w /var/www/virtual/static.okerr.com/ -d static.okerr.com
+bin/a2certbot --prepare -w /var/www/virtual/static.okerr.com/ -d static.okerr.com
 === manual ===
 Info:
     (static.okerr.com) is local 37.59.102.26
@@ -96,16 +104,16 @@ Info:
 ---
 
 # You can verify all hostnames for site
-bin/a2certbot.py --prepare -w /var/www/virtual/static.okerr.com/ -d static.okerr.com -d static2.okerr.com
+bin/a2certbot --prepare -w /var/www/virtual/static.okerr.com/ -d static.okerr.com -d static2.okerr.com
 
 # ... and finally simple main all-in-one command, it guesses aliases and root (command below does same as command above):
-bin/a2certbot.py --prepare -d static.okerr.com --aliases
+bin/a2certbot --prepare -d static.okerr.com --aliases
 ~~~
 
-a2certbot.py can generate letsencrypt certificates in simple way (automatically detecting all aliases and 
+a2certbot can generate letsencrypt certificates in simple way (automatically detecting all aliases and 
 DocumentRoot, but you can use -d instead of --aliases):
 ~~~
-root@bravo:/home/xenon# a2certbot.py --create -d static.okerr.com --aliases
+root@bravo:/home/xenon# a2certbot --create -d static.okerr.com --aliases
 Create cert for static.okerr.com
 RUNNING: certbot certonly --webroot -w /var/www/virtual/static.okerr.com/ -d static.okerr.com -d static2.okerr.com
 Saving debug log to /var/log/letsencrypt/letsencrypt.log
@@ -127,7 +135,7 @@ IMPORTANT NOTES:
 If `certbot renew` fails:
 ~~~shell
 # Check (verify) ALL existing LetsEncrypt certificates (to check why 'certbot renew' may fail ):
-root@bravo:/home/xenon# a2certbot.py 
+root@bravo:/home/xenon# a2certbot 
 === /etc/letsencrypt/renewal/bravo.okerr.com.conf PROBLEM ===
 Info:
     (bravo.okerr.com) Vhost: /etc/apache2/sites-enabled/okerr.conf:17
@@ -138,7 +146,7 @@ Problems:
 ---
 
 # Verify only one certificate 
-root@bravo:/home/xenon# a2certbot.py --host bravo.okerr.com
+root@bravo:/home/xenon# a2certbot --host bravo.okerr.com
 === /etc/letsencrypt/renewal/bravo.okerr.com.conf PROBLEM ===
 Info:
     (bravo.okerr.com) Vhost: /etc/apache2/sites-enabled/okerr.conf:17
@@ -150,8 +158,8 @@ Problems:
 ~~~
 
 
-### a2certbot.py warnings (false positives)
-a2certbot.py expects that requests to .well-known directory of HTTP (port 80) virtualhost must not be redirected.
+### a2certbot warnings (false positives)
+a2certbot expects that requests to .well-known directory of HTTP (port 80) virtualhost must not be redirected.
 If you have redirection like this: `Redirect 301 / https://example.com/` it will report problem:
 ~~~
 Problems:
@@ -170,8 +178,8 @@ To avoid such false positive, do not use such 'blind' redirection, better use th
 This code in `<VirtuaHost *:80>` context will redirect all requests to HTTPS site EXCEPT LetsEncrypt verification 
 requests.
 
-## a2okerr.py
-a2okerr.py is useful only if you are using [okerr](https://okerr.com/): free and open source hybrid (host/network) monitoring system. 
+## a2okerr
+a2okerr is useful only if you are using [okerr](https://okerr.com/): free and open source hybrid (host/network) monitoring system. 
 
 [Okerr](https://okerr.com/) is like [nagios](https://www.nagios.org/) or [zabbix](https://www.zabbix.com/), but can perform network checks 
 from remote locations, has tiny and optional local client  which can run from cron, has powerful logical
@@ -183,21 +191,21 @@ public status pages (like https://status.io/ but free), fault-tolerant sites
 You can use it as free service (like wordpress or gmail) or you can install okerr server on your own linux machine 
 from  [okerr git repository](https://gitlab.com/yaroslaff/okerr-dev/).
 
-You will need to install small [okerrupdate](https://gitlab.com/yaroslaff/okerrupdate) package to use a2okerr.py: `pip3 install okerrupdate`.
+You will need to install small [okerrupdate](https://gitlab.com/yaroslaff/okerrupdate) package to use a2okerr: `pip3 install okerrupdate`.
 
-a2okerr.py discovers all https sites from apache config and creates SSL-indicator in your okerr project 
+a2okerr discovers all https sites from apache config and creates SSL-indicator in your okerr project 
 for each website. You will get alert message to email and/or telegram if any of your https sites has any problem 
 (certificate is not updated in time for any reason and will expire soon or already expired. 
 Website unavailable for any reason). If you have linux server or website - you need okerr.
 
 ~~~shell
 # Create indicator for all local https websites. If indicator already exists, HTTP error 400 will be received - this is OK.
-a2okerr.py
+a2okerr
 
 # alter prefix, policy and description
-a2okerr.py --prefix my:prefix: --policy Hourly --desc "I love okerr and a2okerr"
+a2okerr --prefix my:prefix: --policy Hourly --desc "I love okerr and a2okerr"
 
 # do not really create indicators, just dry run
-a2oker.py --dry
+a2okerr --dry
 ~~~
 
