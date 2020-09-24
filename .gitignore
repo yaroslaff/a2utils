@@ -1,0 +1,5 @@
+build/
+.idea
+*.pyc
+dist/
+a2utils.egg-info/

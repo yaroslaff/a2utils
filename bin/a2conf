@@ -1,0 +1,171 @@
+#!/usr/bin/env python3
+
+import argparse
+import a2conf
+import logging
+import sys
+import re
+
+def vhost_filter(vhost, argsspec, fltr):
+    if argsspec:
+        if argsspec not in vhost.args:
+            # vhost not matching
+            return False
+
+    # skip or process? (--filter option)
+    if fltr is None:
+        # No filter, any vhost passes
+        return True
+
+    for filter_cmd in fltr[0].split(','):
+        for check_node in vhost.children(filter_cmd):
+            log.debug("Check node {}".format(check_node))
+            if len(fltr) == 1:
+                # No args check, just accept
+                return True
+
+            missing_value = False
+            for option in fltr[1:]:
+                if option.lower() not in map(str.lower, check_node.args.split(' ')):
+                    log.debug("Missing option {!r}".format(option))
+                    missing_value = True
+            if not missing_value:
+                # all values found
+                return True
+    return False
+
+def_file = '/etc/apache2/apache2.conf'
+
+epilog = "# Dump config for example.com\n" \
+         "{me} --dump --vhost example.com\n\n"
+
+epilog += "# Show only these commands (try also add --args or --uargs)\n" \
+          "{me} --cmd ServerName ServerAlias\n\n" \
+
+epilog += "# list vhosts and their DocumentRoot\n"\
+          "{me} " \
+          "--vhfmt '{{vhostargs}} {{servername}} {{documentroot}}'\n\n"
+
+epilog += "# List certificates for all VirtualHosts with 'SSLEngine On' from config file examples/example.conf\n" \
+          "{me} examples/example.conf --cmd sslcertificatefile  --filter sslengine on\n\n"
+epilog_str = epilog.format(me=sys.argv[0])
+
+
+
+parser = argparse.ArgumentParser(description='Apache config parser', epilog=epilog_str,
+                                 formatter_class=argparse.RawTextHelpFormatter)
+parser.add_argument(dest='file', nargs='?', default=def_file, metavar='PATH',
+                    help='Config file(s) path (def: {}). Either filename or directory'.format(def_file))
+parser.add_argument('-v', '--verbose', default=False, action='store_true', help='verbose')
+parser.add_argument('--no-includes', default=True, dest='includes', action='store_false',
+                    help='Disable processing Include* directives')
+
+g = parser.add_argument_group('Ouput')
+g.add_argument('--cmd', default=list(), nargs='*', help='show all these commands', type=str.lower)
+g.add_argument('--args', default=False, action='store_true', help='show only arguments')
+g.add_argument('--uargs', default=False, action='store_true', help='show only unique arguments')
+g.add_argument('--vhfmt', default=None, nargs='?', const='', help='VHOST format string')
+g.add_argument('--undef', default='[NOT FOUND]',
+                    help='text displayed in --vhost output if key is not found. Or magic word "_skip"')
+g.add_argument('--dump', default=False, action='store_true', help='Dump fill vhost info')
+
+g = parser.add_argument_group('Filtering')
+g.add_argument('--filter', nargs='+', metavar=('Command', 'Argument'),
+                    help='Process only sections with this command/argument ()',
+                    type=str.lower)
+g.add_argument('--vhost', default=None, metavar='example.com:443',
+                    help='process only this vhost (example.com or example.com:port)')
+g.add_argument('--negative', default=False, action='store_true', help='Negative filtering')
+
+
+
+args = parser.parse_args()
+
+if args.verbose:
+    loglevel = logging.DEBUG
+else:
+    loglevel = logging.INFO
+
+log = logging.getLogger('a2conf')
+log.setLevel(loglevel)
+logh = logging.StreamHandler(stream=sys.stderr)
+logh.setFormatter(logging.Formatter('%(message)s', '%Y-%m-%d %H:%M:%S'))
+log.addHandler(logh)
+
+log.debug("DEBUG")
+
+if not args.file:
+    print("Need filename")
+    exit()
+
+# read file
+root = a2conf.Node(read=args.file, includes=args.includes)
+
+arg_list = list()
+
+if args.vhost:
+    if ':' in args.vhost:
+        host = args.vhost.split(':')[0]
+        argsspec = ':' + args.vhost.split(':')[1]
+    else:
+        host = args.vhost
+        argsspec = None
+
+    args.filter = ['ServerName,ServerAlias', host]
+else:
+    argsspec = None
+
+for vhost in root.children('<VirtualHost>'):
+    if vhost_filter(vhost, argsspec, args.filter) == args.negative:
+        log.debug('skipping vhost because not matched filter')
+        continue
+
+    if args.dump:
+        print("# {}:{}".format(vhost.path, vhost.line))
+        vhost.dump()
+        print()
+
+    ctx = dict()
+    ctx['vhostargs'] = vhost.args
+
+    if args.vhfmt is not None:
+        # reset arglist if we use per-vhost output
+        arg_list = list()
+
+    # now process all statements inside vhost
+    for cnode in vhost.children():
+        # f
+        if cnode.cmd:
+            ctx[cnode.cmd.lower()] = cnode.args
+
+            if args.cmd:
+                if cnode.cmd.lower() in args.cmd:
+                    arg_list.extend(filter(None, cnode.args.split(" ")))
+                    if not (args.args or args.uargs or args.vhfmt) :
+                        print(cnode.cmd, cnode.args)
+
+    ctx['args'] = ' '.join(arg_list)
+    ctx['uargs'] = ' '.join(set(arg_list))
+
+    if args.vhfmt is not None:
+        skip = False
+        # fix ctx, add missing keys
+        for m in re.finditer('{([^\}]+)}',args.vhfmt):
+            if not m.group(1) in ctx:
+                if args.undef == '_skip':
+                    log.debug('Skip because {} not found in vhost data'.format(m.group(1)))
+                    skip = True
+                ctx[m.group(1)] = args.undef
+        if not skip:
+            log.debug(ctx)
+            print(args.vhfmt.format(**ctx))
+
+
+if args.vhfmt is None:
+    # per-file summary
+    if args.args:
+        print(' '.join(arg_list))
+
+    if args.uargs:
+        uargs = set(arg_list)
+        print(' '.join(uargs))
