@@ -1,4 +1,3 @@
-
 [[_TOC_]]
 
 # a2utils 
@@ -68,7 +67,10 @@ $ a2vhost --list
 
 
 
-In the end we got this config file <details><summary>/etc/apache2/sites-enabled/dev.sysattack.com.conf</summary>
+In the end we got this config file 
+<details>
+<summary>/etc/apache2/sites-enabled/dev.sysattack.com.conf</summary>
+
 ~~~
 <VirtualHost *:443> 
     ServerName dev.sysattack.com 
@@ -93,7 +95,7 @@ In the end we got this config file <details><summary>/etc/apache2/sites-enabled/
 </details>
 
 
-## a2conf utility
+## a2conf
 ### Examples
 
 For all examples we will use file 
