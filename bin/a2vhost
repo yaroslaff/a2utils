@@ -39,7 +39,11 @@ def list_vhosts(apacheconf):
 
         hostnames = get_all_hostnames(vhost)
 
-        docroot = vhost.first('DocumentRoot').args 
+        try:
+            docroot = vhost.first('DocumentRoot').args 
+        except AttributeError:
+            docroot = None
+            
         print(vhost.path+':'+str(vhost.line), vhost.args, docroot, ' '.join(hostnames))
 
 def make_basic(apacheconfig, config,  domainlist, webroot):

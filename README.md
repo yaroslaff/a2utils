@@ -29,6 +29,66 @@ If using git sources (without installing), work from root dir of repo and do `ex
 
 ## a2vhost
 
+a2vhost is utility to create new http/https websites from CLI. Easy to use from your scripts.
+
+Here we will create new http/https website fully from CLI (easily scriptable) without running any editor. Example uses host dev.sysattack.com, but you should test with your hostname.
+
+Create basic HTTP website
+~~~shell
+# Create files for new site
+$ mkdir /var/www/virtual/dev.sysattack.com
+$ echo hello > /var/www/virtual/dev.sysattack.com/index.html
+
+# Create HTTP VirtualHost and test
+$ a2vhost --basic -d dev.sysattack.com -w /var/www/virtual/dev.sysattack.com -c /etc/apache2/sites-available/dev. sysattack.com.conf
+$ a2ensite dev.sysattack.com
+$ systemctl reload apache2
+$ curl http://dev.sysattack.com/
+hello
+~~~
+
+Now, lets make this site HTTPS and make new plain HTTP site which will redirect to secure HTTPS
+~~~shell
+# Generate LetsEncrypt certificate. Yes, thats very simple. We do not need --alises for this vhost, but we may need it if VirtualHost has ServerAlias'es and we want certificates for them.
+$ a2certbot --create -d dev.sysattack.com --aliases
+
+# Convert to HTTPS
+$ a2vhost --convert -d dev.sysattack.com
+
+# Make HTTP-to-HTTPS redirection
+$ a2vhost --redirect -d dev.sysattack.com
+
+# Reload
+$ systemctl reload apache2
+
+# List all websites
+$ a2vhost --list
+~~~
+
+In the end we got this config file /etc/apache2/sites-enabled/dev.sysattack.com.conf :
+~~~
+<VirtualHost *:443> 
+    ServerName dev.sysattack.com 
+    DocumentRoot /var/www/virtual/dev.sysattack.com 
+    
+    SSLEngine On 
+    SSLCertificateFile /etc/letsencrypt/live/dev.sysattack.com/fullchain.pem 
+    SSLCertificateKeyFile /etc/letsencrypt/live/dev.sysattack.com/privkey.pem 
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" 
+</VirtualHost> 
+
+# auto-generated plain HTTP site for redirect
+<VirtualHost *:80> 
+    ServerName dev.sysattack.com 
+    DocumentRoot /var/www/virtual/dev.sysattack.com 
+    RewriteEngine On 
+    RewriteCond %{HTTPS} !=on 
+    RewriteCond %{REQUEST_URI} !^/\.well\-known 
+    RewriteRule (.*) https://%{SERVER_NAME}$1 [R=301,L] 
+</VirtualHost> 
+~~~
+
+
 ## a2conf utility
 ### Examples
 
