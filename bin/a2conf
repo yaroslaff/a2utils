@@ -60,7 +60,7 @@ parser.add_argument('-v', '--verbose', default=False, action='store_true', help=
 parser.add_argument('--no-includes', default=True, dest='includes', action='store_false',
                     help='Disable processing Include* directives')
 
-g = parser.add_argument_group('Ouput')
+g = parser.add_argument_group('Output')
 g.add_argument('--cmd', default=list(), nargs='*', help='show all these commands', type=str.lower)
 g.add_argument('--args', default=False, action='store_true', help='show only arguments')
 g.add_argument('--uargs', default=False, action='store_true', help='show only unique arguments')
@@ -76,7 +76,6 @@ g.add_argument('--filter', nargs='+', metavar=('Command', 'Argument'),
 g.add_argument('--vhost', default=None, metavar='example.com:443',
                     help='process only this vhost (example.com or example.com:port)')
 g.add_argument('--negative', default=False, action='store_true', help='Negative filtering')
-
 
 
 args = parser.parse_args()

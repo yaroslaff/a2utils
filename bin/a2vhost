@@ -28,6 +28,15 @@ def get_vhost_by_host(root, host, arg=None):
         if host in get_all_hostnames(vhost):
             return vhost
     
+def get_vhconfig(apacheconfig, vhspec, domainlist):
+    """
+        return path to virtualhost apache config
+    """
+
+    root = Node(apacheconfig)
+    root = Node(get_vhost_by_host(root, domainlist[0], vhspec).path)
+    return root.path
+
 
 #
 # methods
@@ -161,7 +170,29 @@ def make_redirect(apacheconfig, domainlist):
     root.insert(['', '# auto-generated plain HTTP site for redirect', new_vhost], after=vhost)
     root.write_file(root.path)
 
-
+def add_directive(apacheconfig, vhconfig, domain, vhspec, directive):
+    
+    if not vhconfig:
+        vhconfig = get_vhconfig(apacheconfig, vhspec, domain)
+        
+    root = Node(vhconfig)
+    for vhost in root.children('<VirtualHost>'):
+        if vhspec and vhspec not in vhost.args:
+            continue
+        
+        vhnames = get_all_hostnames(vhost)
+        
+        # filter by domain
+        if domain:
+            for d in domain:
+                if d not in vhnames:
+                    print("SKIP", vhost, vhnames, d)
+                    return
+        
+        vhost.insert(directive)
+        root.write_file(root.path)
+        return
+        
 
 def main():
 
@@ -178,6 +209,8 @@ def main():
                    help='Convert HTTP --domain site to HTTPS')
     g.add_argument('--redirect', default=False, action='store_true',
                    help='Create HTTP --domain redirect vhost to HTTPS')
+    g.add_argument('--add', metavar='DIRECTIVE',
+                   help='Add custom apache configuration directive to vhost')
 
     g = parser.add_argument_group('Options')
     g.add_argument('-a', '--apacheconfig', default=def_apacheconf, metavar='CONF',
@@ -187,6 +220,7 @@ def main():
     g.add_argument('-w', '--webroot', default=None, metavar='PATH',
                    help='Webroot (DocumentRoot) for new site')
     g.add_argument('-d', '--domain', nargs='*', metavar='DOMAIN', help='hostname/domain(s) for new website')
+    g.add_argument('--vhost', metavar='VHOST', help='Process only this vhost (e.g. *:80)')
 
 
     args = parser.parse_args()
@@ -199,5 +233,7 @@ def main():
         make_convert(args.apacheconfig, args.domain)
     elif args.redirect:
         make_redirect(args.apacheconfig, args.domain)
+    elif args.add:
+        add_directive(args.apacheconfig, args.config, args.domain, args.vhost, args.add)
 
 main()

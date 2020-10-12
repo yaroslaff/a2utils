@@ -94,6 +94,11 @@ In the end we got this config file
 ~~~
 </details>
 
+Optionally, you can add any directive to any VirtualHost. We will add comment:
+~~~
+# add directive
+sudo bin/a2vhost --add '# This site is main https site'  -d localhost.okerr.com  --vhost '*:443'
+~~~
 
 ## a2conf
 ### Examples
