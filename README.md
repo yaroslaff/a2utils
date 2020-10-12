@@ -39,7 +39,7 @@ $ mkdir /var/www/virtual/dev.sysattack.com
 $ echo hello > /var/www/virtual/dev.sysattack.com/index.html
 
 # Create HTTP VirtualHost and test
-$ a2vhost --basic -d dev.sysattack.com -w /var/www/virtual/dev.sysattack.com -c /etc/apache2/sites-available/dev. sysattack.com.conf
+$ a2vhost --basic -d dev.sysattack.com -w /var/www/virtual/dev.sysattack.com -c /etc/apache2/sites-available/dev.sysattack.com.conf
 $ a2ensite dev.sysattack.com
 $ systemctl reload apache2
 $ curl http://dev.sysattack.com/
