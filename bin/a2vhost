@@ -91,7 +91,8 @@ def make_both(apacheconfig, config,  domainlist, webroot, auto):
         cmd.append('-d')
         cmd.append(domain)
     cmd.append('--aliases')
-    subprocess.run(cmd)
+    cp = subprocess.run(cmd)
+    assert(cp.returncode == 0)
 
     print(".. convert")
     make_convert(apacheconfig, domainlist)
@@ -120,7 +121,7 @@ def make_basic(apacheconfig, config,  domainlist, webroot, auto):
             webroot = guess_webroot(domainlist[0])
             print('# [auto] will use webroot {}'.format(webroot))
             if not os.path.isdir(webroot):
-                print('# [auto] create webrot {}'.format(webroot))
+                print('# [auto] create webroot {}'.format(webroot))
                 os.mkdir(webroot)
         else:
             print("Need webroot (DocumentRoot) path, e.g.: -w /var/www/{} or use --auto to use/create {}"
