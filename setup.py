@@ -9,7 +9,7 @@ def read(fname):
 
 setup(
     name='a2utils',
-    version='0.0.3',
+    version='0.0.4',
     scripts=[
         'bin/a2conf', 
         'bin/a2okerr', 
@@ -19,7 +19,7 @@ setup(
 
     # install_requires=[],
 
-    url='https://gitlab.com/yaroslaff/a2utils',
+    url='https://github.com/yaroslaff/a2utils',
     license='MIT',
     author='Yaroslav Polyakov',
     long_description=read('README.md'),

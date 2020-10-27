@@ -1,5 +1,7 @@
 [[_TOC_]]
 
+[_TOC_]
+
 # a2utils 
 
 Package consist of few CLI utilities (based on [a2conf](https://gitlab.com/yaroslaff/a2conf) library)
