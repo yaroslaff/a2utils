@@ -144,8 +144,7 @@ def make_convert(apacheconfig, domainlist):
 def make_redirect(apacheconfig, domainlist):
     # sanity check 
     if not domainlist:
-        print("Specify at least        make_redirect(args.apacheconfig, args.domain)
- one domain name: -d example.com")
+        print("Specify at least one domain name: -d example.com")
         sys.exit(1)
 
     # check maybe SSL host already exists
