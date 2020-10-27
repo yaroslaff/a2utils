@@ -55,6 +55,16 @@ def list_vhosts(apacheconf):
             
         print(vhost.path+':'+str(vhost.line), vhost.args, docroot, ' '.join(hostnames))
 
+def make_both(apacheconfig, config,  domainlist, webroot):
+    print(".. basic")
+    make_basic(args.apacheconfig, args.config,  args.domain, args.webroot)
+    
+    print(".. convert")
+    make_convert(args.apacheconfig, args.domain)
+    
+    print(".. redirect")
+    make_redirect(args.apacheconfig, args.domain)        
+
 def make_basic(apacheconfig, config,  domainlist, webroot):
     # sanity check 
     if not domainlist:
@@ -134,7 +144,8 @@ def make_convert(apacheconfig, domainlist):
 def make_redirect(apacheconfig, domainlist):
     # sanity check 
     if not domainlist:
-        print("Specify at least one domain name: -d example.com")
+        print("Specify at least        make_redirect(args.apacheconfig, args.domain)
+ one domain name: -d example.com")
         sys.exit(1)
 
     # check maybe SSL host already exists
@@ -209,6 +220,9 @@ def main():
                    help='Convert HTTP --domain site to HTTPS')
     g.add_argument('--redirect', default=False, action='store_true',
                    help='Create HTTP --domain redirect vhost to HTTPS')
+    g.add_argument('--both', default=False, action='store_true',
+                   help='Create both http/https sites and request certificate')
+
     g.add_argument('--add', metavar='DIRECTIVE',
                    help='Add custom apache configuration directive to vhost')
 
@@ -227,6 +241,8 @@ def main():
 
     if args.list:
         list_vhosts(args.apacheconfig)
+    elif args.both:
+        make_both(args.apacheconfig, args.config,  args.domain, args.webroot)
     elif args.basic:
         make_basic(args.apacheconfig, args.config,  args.domain, args.webroot)
     elif args.convert:
