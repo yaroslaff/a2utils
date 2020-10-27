@@ -91,8 +91,10 @@ def make_both(apacheconfig, config,  domainlist, webroot, auto):
         cmd.append('-d')
         cmd.append(domain)
     cmd.append('--aliases')
+    
     cp = subprocess.run(cmd)
     assert(cp.returncode == 0)
+    print("zzz returncode: {} cp: {}".format(cp.returncode, cp))
 
     print(".. convert")
     make_convert(apacheconfig, domainlist)
