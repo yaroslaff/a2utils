@@ -59,7 +59,7 @@ def list_vhosts(apacheconf):
 def make_both(apacheconfig, config,  domainlist, webroot):
 
     def reload():
-        print(".. . reload")
+        print(".. reload")
         subprocess.run(['apache2', '-k', 'graceful'])
 
 
@@ -70,10 +70,19 @@ def make_both(apacheconfig, config,  domainlist, webroot):
     print(".. basic")
     make_basic(apacheconfig, config,  domainlist, webroot)
     
-    print(".. . enable")
+    print(".. enable")
     subprocess.run(['a2ensite', os.path.basename(config)])
     reload()
     
+
+    print(".. request certificate")
+    cmd = [ 'a2certbot', '--create' ]
+    for domain in domainlist:
+        cmd.append('-d')
+        cmd.append(domain)
+    cmd.append('--aliases')
+    subprocess.run(cmd)
+
     print(".. convert")
     make_convert(apacheconfig, domainlist)
     reload()
