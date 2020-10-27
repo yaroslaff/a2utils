@@ -44,30 +44,41 @@ a2vhost is utility to create new http/https websites from CLI. Easy to use from 
 
 Here we will create new http/https website fully from CLI (easily scriptable) without running any editor. Example uses host dev.sysattack.com, but you should test with your hostname.
 
+Mighty one-liner: create HTTP/HTTPS websites (http will redirect to https), obtain certificate for https. (as root)
+
+```shell
+a2vhost --both -d echo2.sysattack.com echo3.sysattack.com echo4.sysattack.com echo5.sysattack.com --auto
+```
+`--both` instructs to make both https website (main) and small plain http website to handle letsencrypt verification and redirect to https.
+
+`--auto` auto-detects virtualhost config file name (you may override with `-c`) and guesses and creates webroot directory if it's missing (override with `-w`)
+
+Following commands will make similar job step-by-step and without `--auto`:
+
 Create basic HTTP website
 ```shell
 # Create files for new site
-$ mkdir /var/www/virtual/dev.sysattack.com
-$ echo hello > /var/www/virtual/dev.sysattack.com/index.html
+$ mkdir /var/www/virtual/echo2.sysattack.com
+$ echo hello > /var/www/virtual/echo2.sysattack.com/index.html
 
 # Create HTTP VirtualHost and test
-$ a2vhost --basic -d dev.sysattack.com -w /var/www/virtual/dev.sysattack.com -c /etc/apache2/sites-available/dev.sysattack.com.conf
-$ a2ensite dev.sysattack.com
+$ a2vhost --basic -d echo2.sysattack.com echo3.sysattack.com echo4.sysattack.com -w /var/www/virtual/echo2.sysattack.com -c /etc/apache2/sites-available/echo2.sysattack.com.conf
+$ a2ensite echo2.sysattack.com
 $ systemctl reload apache2
-$ curl http://dev.sysattack.com/
+$ curl http://echo2.sysattack.com/
 hello
 ```
 
 Now, lets make this site HTTPS and make new plain HTTP site which will redirect to secure HTTPS
 ```shell
 # Generate LetsEncrypt certificate. Yes, thats very simple. We do not need --alises for this vhost, but we may need it if VirtualHost has ServerAlias'es and we want certificates for them.
-$ a2certbot --create -d dev.sysattack.com --aliases
+$ a2certbot --create -d echo2.sysattack.com --aliases
 
 # Convert to HTTPS
-$ a2vhost --convert -d dev.sysattack.com
+$ a2vhost --convert -d echo2.sysattack.com
 
 # Make HTTP-to-HTTPS redirection
-$ a2vhost --redirect -d dev.sysattack.com
+$ a2vhost --redirect -d echo2.sysattack.com
 
 # Reload
 $ systemctl reload apache2
@@ -77,27 +88,26 @@ $ a2vhost --list
 ```
 
 
-
-
 In the end we got this config file 
 <details>
-<summary>/etc/apache2/sites-enabled/dev.sysattack.com.conf</summary>
-
+<summary>/etc/apache2/sites-enabled/echo2.sysattack.com.conf</summary>
 ```
 <VirtualHost *:443> 
-    ServerName dev.sysattack.com 
-    DocumentRoot /var/www/virtual/dev.sysattack.com 
+    ServerName echo2.sysattack.com 
+    ServerAlias echo3.sysattack.com echo4.sysattack.com echo5.sysattack.com 
+    DocumentRoot /var/www/virtual/echo2.sysattack.com 
     
     SSLEngine On 
-    SSLCertificateFile /etc/letsencrypt/live/dev.sysattack.com/fullchain.pem 
-    SSLCertificateKeyFile /etc/letsencrypt/live/dev.sysattack.com/privkey.pem 
+    SSLCertificateFile /etc/letsencrypt/live/echo2.sysattack.com/fullchain.pem 
+    SSLCertificateKeyFile /etc/letsencrypt/live/echo2.sysattack.com/privkey.pem 
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" 
 </VirtualHost> 
 
 # auto-generated plain HTTP site for redirect
 <VirtualHost *:80> 
-    ServerName dev.sysattack.com 
-    DocumentRoot /var/www/virtual/dev.sysattack.com 
+    ServerName echo2.sysattack.com 
+    ServerAlias echo3.sysattack.com echo4.sysattack.com echo5.sysattack.com 
+    DocumentRoot /var/www/virtual/echo2.sysattack.com 
     RewriteEngine On 
     RewriteCond %{HTTPS} !=on 
     RewriteCond %{REQUEST_URI} !^/\.well\-known 
@@ -109,7 +119,7 @@ In the end we got this config file
 Optionally, you can add any directive to any VirtualHost. We will add comment:
 ```shell
 # add directive
-sudo bin/a2vhost --add '# This site is main https site'  -d localhost.okerr.com  --vhost '*:443'
+sudo bin/a2vhost --add '# This site is main https site'  -d echo2.sysattack.com --vhost '*:443'
 ```
 
 ## a2conf
