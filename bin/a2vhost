@@ -121,7 +121,7 @@ def make_basic(apacheconfig, config,  domainlist, webroot, auto):
             print('# [auto] will use webroot {}'.format(webroot))
             if not os.path.isdir(webroot):
                 print('# [auto] create webrot {}'.format(webroot))
-                os.path.mkdir(webroot)
+                os.mkdir(webroot)
         else:
             print("Need webroot (DocumentRoot) path, e.g.: -w /var/www/{} or use --auto to use/create {}"
                 .format(domainlist[0], guess_webroot(domainlist[0])))
