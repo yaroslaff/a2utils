@@ -3,6 +3,7 @@
 from a2conf import Node
 import argparse
 import sys
+import subprocess
 import os
 
 
@@ -56,14 +57,30 @@ def list_vhosts(apacheconf):
         print(vhost.path+':'+str(vhost.line), vhost.args, docroot, ' '.join(hostnames))
 
 def make_both(apacheconfig, config,  domainlist, webroot):
+
+    def reload():
+        print(".. . reload")
+        subprocess.run(['apache2', '-k', 'graceful'])
+
+
+    if not config:
+        # generate config file name
+        config = '/etc/apache2/sites-available/{}.conf'.format(domainlist[0])
+
     print(".. basic")
     make_basic(apacheconfig, config,  domainlist, webroot)
     
+    print(".. . enable")
+    subprocess.run(['a2ensite', os.path.basename(config)])
+    reload()
+    
     print(".. convert")
     make_convert(apacheconfig, domainlist)
-    
+    reload()
+
     print(".. redirect")
     make_redirect(apacheconfig, domainlist)        
+    reload()
 
 def make_basic(apacheconfig, config,  domainlist, webroot):
     # sanity check 
@@ -73,7 +90,7 @@ def make_basic(apacheconfig, config,  domainlist, webroot):
     if not config:
         # generate config file name
         config = '/etc/apache2/sites-available/{}.conf'.format(domainlist[0])
-        # print("Specify virtualhostconfig file, e.g. -c /etc/apache2/sites-available/{}.conf".format(domainlist[0]))
+        # print("Specify VirtualHost config file, e.g. -c /etc/apache2/sites-available/{}.conf".format(domainlist[0]))
         # sys.exit(1)
     if not webroot:
         print("Need webroot (DocumentRoot) path, e.g.: -w /var/www/{}".format(domainlist[0]))
