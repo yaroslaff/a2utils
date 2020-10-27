@@ -85,6 +85,11 @@ def make_both(apacheconfig, config,  domainlist, webroot, auto):
     reload()
     
 
+    # re-read webroot from config if it was auto-generate
+    root = Node(apacheconfig)
+    vhost = get_vhost_by_host(root, domainlist[0], ':80')
+    webroot = vhost.first('DocumentRoot').args
+
     print(".. request certificate")
     cmd = [ 'certbot', 'certonly', '--webroot', '-w', webroot ]
     for domain in domainlist:
@@ -288,7 +293,8 @@ def main():
                    help='Webroot (DocumentRoot) for new site')
     g.add_argument('-d', '--domain', nargs='*', metavar='DOMAIN', help='hostname/domain(s) for new website')
     g.add_argument('--vhost', metavar='VHOST', help='Process only this vhost (e.g. *:80)')
-    g.add_argument('--auto', default=False, action='store_true', help='Auto-help (guess config file name, create missing directories)')
+    g.add_argument('--auto', default=False, action='store_true', help='Autogenerate/guess missing params " \
+        "(config file name, create missing directories)')
 
 
     args = parser.parse_args()
