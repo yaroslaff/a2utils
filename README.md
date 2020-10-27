@@ -4,7 +4,6 @@
 - [Installation](#installation)
 - [CLI utilities](#cli-utilities)
   - [a2vhost](#a2vhost)
-- [auto-generated plain HTTP site for redirect](#auto-generated-plain-http-site-for-redirect)
   - [a2conf](#a2conf)
   - [a2certbot](#a2certbot)
     - [Requesting new certificate and troubleshooting](#requesting-new-certificate-and-troubleshooting)
@@ -104,8 +103,6 @@ In the end we got this config file
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" 
   </VirtualHost> 
 
-
-  # auto-generated plain HTTP site for redirect
   <VirtualHost *:80> 
     ServerName echo2.sysattack.com 
     ServerAlias echo3.sysattack.com echo4.sysattack.com echo5.sysattack.com 
