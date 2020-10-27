@@ -86,12 +86,11 @@ def make_both(apacheconfig, config,  domainlist, webroot, auto):
     
 
     print(".. request certificate")
-    cmd = [ 'a2certbot', '--create' ]
+    cmd = [ 'certbot', 'certonly', '--webroot', '-w', webroot ]
     for domain in domainlist:
         cmd.append('-d')
         cmd.append(domain)
-    cmd.append('--aliases')
-    
+
     cp = subprocess.run(cmd)
     assert(cp.returncode == 0)
     print("zzz returncode: {} cp: {}".format(cp.returncode, cp))

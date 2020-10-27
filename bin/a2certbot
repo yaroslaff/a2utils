@@ -454,7 +454,8 @@ def main():
         for alias in aliases:
             cmd.extend(['-d', alias])
         print("RUNNING: {}".format(' '.join(cmd)))
-        subprocess.run(cmd)
+        cp = subprocess.run(cmd)
+        sys.exit(cp.returncode)
 
 
     elif os.path.isdir(args.lepath):
