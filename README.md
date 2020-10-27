@@ -1,10 +1,20 @@
-[[_TOC_]]
+# Table of Contents 
+- [Table of Contents](#table-of-contents)
+- [a2utils](#a2utils)
+- [Installation](#installation)
+- [CLI utilities](#cli-utilities)
+  - [a2vhost](#a2vhost)
+  - [a2conf](#a2conf)
+  - [a2certbot](#a2certbot)
+    - [Requesting new certificate and troubleshooting](#requesting-new-certificate-and-troubleshooting)
+    - [Troubleshooting renew certificates](#troubleshooting-renew-certificates)
+    - [a2certbot warnings (false positives)](#a2certbot-warnings-false-positives)
+  - [a2okerr](#a2okerr)
 
-[_TOC_]
 
 # a2utils 
 
-Package consist of few CLI utilities (based on [a2conf](https://gitlab.com/yaroslaff/a2conf) library)
+Package consist of few CLI utilities (based on [a2conf](https://github.com/yaroslaff/a2conf) library)
 
 - `a2conf` -  query apache2 config (e.g. get DocumentRoot or get all hostnames for specific VirtualHost)
 - `a2certbot` - diagnose problems with Apache2 VirtualHost and LetsEncrypt certificates and make SSL sites easily
@@ -21,7 +31,7 @@ pip3 install a2utils
 
 or get sources from git repo:
 ~~~
-git clone https://gitlab.com/yaroslaff/a2utils
+git clone https://github.com/yaroslaff/a2utils
 ~~~
 If using git sources (without installing), work from root dir of repo and do `export PYTONPATH=.`
 
@@ -35,7 +45,7 @@ a2vhost is utility to create new http/https websites from CLI. Easy to use from 
 Here we will create new http/https website fully from CLI (easily scriptable) without running any editor. Example uses host dev.sysattack.com, but you should test with your hostname.
 
 Create basic HTTP website
-~~~shell
+```shell
 # Create files for new site
 $ mkdir /var/www/virtual/dev.sysattack.com
 $ echo hello > /var/www/virtual/dev.sysattack.com/index.html
@@ -46,10 +56,10 @@ $ a2ensite dev.sysattack.com
 $ systemctl reload apache2
 $ curl http://dev.sysattack.com/
 hello
-~~~
+```
 
 Now, lets make this site HTTPS and make new plain HTTP site which will redirect to secure HTTPS
-~~~shell
+```shell
 # Generate LetsEncrypt certificate. Yes, thats very simple. We do not need --alises for this vhost, but we may need it if VirtualHost has ServerAlias'es and we want certificates for them.
 $ a2certbot --create -d dev.sysattack.com --aliases
 
@@ -64,7 +74,7 @@ $ systemctl reload apache2
 
 # List all websites
 $ a2vhost --list
-~~~
+```
 
 
 
@@ -73,7 +83,7 @@ In the end we got this config file
 <details>
 <summary>/etc/apache2/sites-enabled/dev.sysattack.com.conf</summary>
 
-~~~
+```
 <VirtualHost *:443> 
     ServerName dev.sysattack.com 
     DocumentRoot /var/www/virtual/dev.sysattack.com 
@@ -93,26 +103,26 @@ In the end we got this config file
     RewriteCond %{REQUEST_URI} !^/\.well\-known 
     RewriteRule (.*) https://%{SERVER_NAME}$1 [R=301,L] 
 </VirtualHost> 
-~~~
+```
 </details>
 
 Optionally, you can add any directive to any VirtualHost. We will add comment:
-~~~
+```shell
 # add directive
 sudo bin/a2vhost --add '# This site is main https site'  -d localhost.okerr.com  --vhost '*:443'
-~~~
+```
 
 ## a2conf
-### Examples
+### Examples <!-- omit in toc -->
 
 For all examples we will use file 
-[examples/example.conf](https://gitlab.com/yaroslaff/a2conf/raw/master/examples/example.conf).
+[examples/example.conf](https://github.com/yaroslaff/a2conf/raw/master/examples/example.conf).
 You can omit this parameter to use default `/etc/apache2/apache2.conf`.
 
 Use `export PYTHONPATH=.` to use module if it's not installed.
 
 Most useful examples:
-~~~shell
+```shell
 $ bin/a2conf examples/example.conf --dump --vhost secure.example.com 
 # examples/example.conf:15
 <VirtualHost *:443> 
@@ -145,7 +155,7 @@ secure.example.com example.com www.example.com 2.example.com 1.example.com
 # per-vhost summary with filtering
 $ bin/a2conf examples/example.conf --cmd servername serveralias --vhfmt 'Host: {servername} Root: {documentroot} Cert: {sslcertificatefile}' --filter sslcertificatefile
 Host: example.com Root: /var/www/example Cert: /etc/letsencrypt/live/example.com/fullchain.pem
-~~~
+```
 
 You can get list of all available tokens for `--vhfmt` option in verbose mode (`-v` option).
 
@@ -164,7 +174,7 @@ configuration, you will not hit [failed validation limit](https://letsencrypt.or
 ### Requesting new certificate and troubleshooting
 
 Before requesting new certificates:
-~~~shell
+```shell
 # Verify configuration for website for which you want to request certificate for first time.
 bin/a2certbot --prepare -w /var/www/virtual/static.okerr.com/ -d static.okerr.com
 === manual ===
@@ -181,11 +191,11 @@ bin/a2certbot --prepare -w /var/www/virtual/static.okerr.com/ -d static.okerr.co
 
 # ... and finally simple main all-in-one command, it guesses aliases and root (command below does same as command above):
 bin/a2certbot --prepare -d static.okerr.com --aliases
-~~~
+```
 
 a2certbot can generate letsencrypt certificates in simple way (automatically detecting all aliases and 
 DocumentRoot, but you can use -d instead of --aliases):
-~~~
+```
 root@bravo:/home/xenon# a2certbot --create -d static.okerr.com --aliases
 Create cert for static.okerr.com
 RUNNING: certbot certonly --webroot -w /var/www/virtual/static.okerr.com/ -d static.okerr.com -d static2.okerr.com
@@ -201,12 +211,12 @@ Cleaning up challenges
 IMPORTANT NOTES:
  - Congratulations! Your certificate and chain have been saved at:
 ...
-~~~
+```
 
 ### Troubleshooting renew certificates
 
 If `certbot renew` fails:
-~~~shell
+```shell
 # Check (verify) ALL existing LetsEncrypt certificates (to check why 'certbot renew' may fail ):
 root@bravo:/home/xenon# a2certbot 
 === /etc/letsencrypt/renewal/bravo.okerr.com.conf PROBLEM ===
@@ -228,26 +238,26 @@ Info:
 Problems:
     No DocumentRoot in vhost at /etc/apache2/sites-enabled/okerr.conf:17
 ---
-~~~
+```
 
 
 ### a2certbot warnings (false positives)
 a2certbot expects that requests to .well-known directory of HTTP (port 80) virtualhost must not be redirected.
 If you have redirection like this: `Redirect 301 / https://example.com/` it will report problem:
-~~~
+```
 Problems:
     Requests will be redirected: Redirect 301 / https://www.example.com/
-~~~
+```
 
 Actually, this could be OK (false positive) and real verification from `certbot renew` may pass (if https 
 site has same  DocumentRoot). To see if this is real problem or not see result for 'Simulated check'. 
 If simulated check matches - website will pass certbot verification. 
 
 To avoid such false positive, do not use such 'blind' redirection, better use this:
-~~~
+```
       RewriteCond %{REQUEST_URI} !^/\.well\-known        
       RewriteRule (.*) https://%{SERVER_NAME}$1 [R=301,L]
-~~~
+```
 This code in `<VirtuaHost *:80>` context will redirect all requests to HTTPS site EXCEPT LetsEncrypt verification 
 requests.
 
@@ -271,7 +281,7 @@ for each website. You will get alert message to email and/or telegram if any of 
 (certificate is not updated in time for any reason and will expire soon or already expired. 
 Website unavailable for any reason). If you have linux server or website - you need okerr.
 
-~~~shell
+```shell
 # Create indicator for all local https websites. If indicator already exists, HTTP error 400 will be received - this is OK.
 a2okerr
 
@@ -280,5 +290,6 @@ a2okerr --prefix my:prefix: --policy Hourly --desc "I love okerr and a2okerr"
 
 # do not really create indicators, just dry run
 a2okerr --dry
-~~~
+```
+
 
