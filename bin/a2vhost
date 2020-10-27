@@ -71,8 +71,10 @@ def make_basic(apacheconfig, config,  domainlist, webroot):
         print("Specify at least one domain name: -d example.com")
         sys.exit(1)
     if not config:
-        print("Specify virtualhostconfig file, e.g. -c /etc/apache2/sites-available/{}.conf".format(domainlist[0]))
-        sys.exit(1)
+        # generate config file name
+        config = '/etc/apache2/sites-available/{}.conf'.format(domainlist[0])
+        # print("Specify virtualhostconfig file, e.g. -c /etc/apache2/sites-available/{}.conf".format(domainlist[0]))
+        # sys.exit(1)
     if not webroot:
         print("Need webroot (DocumentRoot) path, e.g.: -w /var/www/{}".format(domainlist[0]))
 
