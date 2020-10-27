@@ -42,7 +42,7 @@ If using git sources (without installing), work from root dir of repo and do `ex
 
 a2vhost is utility to create new http/https websites from CLI. Easy to use from your scripts.
 
-Here we will create new http/https website fully from CLI (easily scriptable) without running any editor. Example uses host dev.sysattack.com, but you should test with your hostname.
+Example uses hosts echoN.sysattack.com, but you should test with your hostname(s).
 
 Mighty one-liner: create HTTP/HTTPS websites (http will redirect to https), obtain certificate for https. (as root)
 
