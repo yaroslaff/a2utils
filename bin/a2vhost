@@ -69,8 +69,8 @@ def make_both(apacheconfig, config,  domainlist, webroot, auto):
 
     def reload():
         print(".. reload")
-        subprocess.run(['apache2', '-k', 'graceful'])
-
+        # subprocess.run(['apache2', '-k', 'graceful'])
+        subprocess.run(['systemctl', 'reload', 'apache2'])
 
     if auto and not config:
         # generate config file name
@@ -98,7 +98,7 @@ def make_both(apacheconfig, config,  domainlist, webroot, auto):
 
     cp = subprocess.run(cmd)
     assert(cp.returncode == 0)
-    
+
     print(".. convert")
     make_convert(apacheconfig, domainlist)
     reload()
