@@ -38,6 +38,15 @@ def get_vhconfig(apacheconfig, vhspec, domainlist):
     root = Node(get_vhost_by_host(root, domainlist[0], vhspec).path)
     return root.path
 
+def guess_webroot(basename):
+    prefixes = ['/var/www/virtual', '/var/www', '/usr/local/apache/htdocs', '/home/www/htdocs']
+    for prefix in prefixes:
+        if os.path.isdir(prefix):
+            return os.path.join(prefix, basename)
+
+def guess_apacheconfig(hostname):
+    return os.path.join('/etc/apache2/sites-available/', hostname+'.conf')
+    
 
 #
 # methods
@@ -56,19 +65,20 @@ def list_vhosts(apacheconf):
             
         print(vhost.path+':'+str(vhost.line), vhost.args, docroot, ' '.join(hostnames))
 
-def make_both(apacheconfig, config,  domainlist, webroot):
+def make_both(apacheconfig, config,  domainlist, webroot, auto):
 
     def reload():
         print(".. reload")
         subprocess.run(['apache2', '-k', 'graceful'])
 
 
-    if not config:
+    if auto and not config:
         # generate config file name
-        config = '/etc/apache2/sites-available/{}.conf'.format(domainlist[0])
+        config = guess_apacheconfig(domainlist[0])
+        print('# [auto] will use VirtualHost config file {}'.format(config))
 
     print(".. basic")
-    make_basic(apacheconfig, config,  domainlist, webroot)
+    make_basic(apacheconfig, config,  domainlist, webroot, auto)
     
     print(".. enable")
     subprocess.run(['a2ensite', os.path.basename(config)])
@@ -91,18 +101,32 @@ def make_both(apacheconfig, config,  domainlist, webroot):
     make_redirect(apacheconfig, domainlist)        
     reload()
 
-def make_basic(apacheconfig, config,  domainlist, webroot):
+def make_basic(apacheconfig, config,  domainlist, webroot, auto):
     # sanity check 
     if not domainlist:
         print("Specify at least one domain name: -d example.com")
         sys.exit(1)
     if not config:
-        # generate config file name
-        config = '/etc/apache2/sites-available/{}.conf'.format(domainlist[0])
-        # print("Specify VirtualHost config file, e.g. -c /etc/apache2/sites-available/{}.conf".format(domainlist[0]))
-        # sys.exit(1)
+        if auto:
+            # generate config file name
+            config = guess_apacheconfig(domainlist[0])
+            print('# [auto] will use VirtualHost config file {}'.format(config))
+        else:
+            print("Specify VirtualHost config file, e.g. -c /etc/apache2/sites-available/{}.conf or use --auto".format(domainlist[0]))
+            sys.exit(1)
+
     if not webroot:
-        print("Need webroot (DocumentRoot) path, e.g.: -w /var/www/{}".format(domainlist[0]))
+        if auto:
+            webroot = guess_webroot(domainlist[0])
+            print('# [auto] will use webroot {}'.format(webroot))
+            if not os.path.isdir(webroot):
+                print('# [auto] create webrot {}'.format(webroot))
+                os.path.mkdir(webroot)
+        else:
+            print("Need webroot (DocumentRoot) path, e.g.: -w /var/www/{} or use --auto to use/create {}"
+                .format(domainlist[0], guess_webroot(domainlist[0])))
+                sys.exit(1)
+
 
     # check maybe it exists
     root = Node(apacheconfig)
@@ -262,6 +286,7 @@ def main():
                    help='Webroot (DocumentRoot) for new site')
     g.add_argument('-d', '--domain', nargs='*', metavar='DOMAIN', help='hostname/domain(s) for new website')
     g.add_argument('--vhost', metavar='VHOST', help='Process only this vhost (e.g. *:80)')
+    g.add_argument('--auto', default=False, action='store_true', help='Auto-help (guess config file name, create missing directories)')
 
 
     args = parser.parse_args()
@@ -269,9 +294,9 @@ def main():
     if args.list:
         list_vhosts(args.apacheconfig)
     elif args.both:
-        make_both(args.apacheconfig, args.config,  args.domain, args.webroot)
+        make_both(args.apacheconfig, args.config,  args.domain, args.webroot, args.auto)
     elif args.basic:
-        make_basic(args.apacheconfig, args.config,  args.domain, args.webroot)
+        make_basic(args.apacheconfig, args.config,  args.domain, args.webroot, args.auto)
     elif args.convert:
         make_convert(args.apacheconfig, args.domain)
     elif args.redirect:
