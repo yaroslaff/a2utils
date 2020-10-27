@@ -4,6 +4,7 @@
 - [Installation](#installation)
 - [CLI utilities](#cli-utilities)
   - [a2vhost](#a2vhost)
+- [auto-generated plain HTTP site for redirect](#auto-generated-plain-http-site-for-redirect)
   - [a2conf](#a2conf)
   - [a2certbot](#a2certbot)
     - [Requesting new certificate and troubleshooting](#requesting-new-certificate-and-troubleshooting)
@@ -87,13 +88,12 @@ $ systemctl reload apache2
 $ a2vhost --list
 ```
 
-
 In the end we got this config file 
 <details>
 <summary>/etc/apache2/sites-enabled/echo2.sysattack.com.conf</summary>
 
-```
-<VirtualHost *:443> 
+
+  <VirtualHost *:443> 
     ServerName echo2.sysattack.com 
     ServerAlias echo3.sysattack.com echo4.sysattack.com echo5.sysattack.com 
     DocumentRoot /var/www/virtual/echo2.sysattack.com 
@@ -102,9 +102,11 @@ In the end we got this config file
     SSLCertificateFile /etc/letsencrypt/live/echo2.sysattack.com/fullchain.pem 
     SSLCertificateKeyFile /etc/letsencrypt/live/echo2.sysattack.com/privkey.pem 
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" 
-</VirtualHost> 
-# auto-generated plain HTTP site for redirect
-<VirtualHost *:80> 
+  </VirtualHost> 
+
+
+  # auto-generated plain HTTP site for redirect
+  <VirtualHost *:80> 
     ServerName echo2.sysattack.com 
     ServerAlias echo3.sysattack.com echo4.sysattack.com echo5.sysattack.com 
     DocumentRoot /var/www/virtual/echo2.sysattack.com 
@@ -112,7 +114,7 @@ In the end we got this config file
     RewriteCond %{HTTPS} !=on 
     RewriteCond %{REQUEST_URI} !^/\.well\-known 
     RewriteRule (.*) https://%{SERVER_NAME}$1 [R=301,L] 
-</VirtualHost> 
+  </VirtualHost> 
 ```
 </details>
 
