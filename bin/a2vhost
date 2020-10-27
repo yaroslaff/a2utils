@@ -96,6 +96,7 @@ def make_both(apacheconfig, config,  domainlist, webroot, auto):
         cmd.append('-d')
         cmd.append(domain)
 
+    print("  {}".format(cmd))
     cp = subprocess.run(cmd)
     assert(cp.returncode == 0)
 
