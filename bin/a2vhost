@@ -57,13 +57,13 @@ def list_vhosts(apacheconf):
 
 def make_both(apacheconfig, config,  domainlist, webroot):
     print(".. basic")
-    make_basic(args.apacheconfig, args.config,  args.domain, args.webroot)
+    make_basic(apacheconfig, config,  domainlist, webroot)
     
     print(".. convert")
-    make_convert(args.apacheconfig, args.domain)
+    make_convert(apacheconfig, domainlist)
     
     print(".. redirect")
-    make_redirect(args.apacheconfig, args.domain)        
+    make_redirect(apacheconfig, domainlist)        
 
 def make_basic(apacheconfig, config,  domainlist, webroot):
     # sanity check 
