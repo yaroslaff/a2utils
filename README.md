@@ -21,7 +21,37 @@ Package consist of few CLI utilities (based on [a2conf](https://github.com/yaros
 - `a2vhost` - manipulate apache2 VirtualHosts
 - `a2okerr` - generate indicators for SSL VirtualHosts in [okerr](https://okerr.com/) monitoring system.
 
-All utilities 
+Why a2utils is so great? 
+
+You can create VirtualHost right from shell:
+~~~~
+a2vhost --basic -d example.com www.example.com --auto
+~~~~
+
+or even better (create pair of http and https hosts with default auto-guessed settings and LetsEncrypt certificate):
+~~~
+a2vhost --both -d example.com www.example.com --auto
+~~~
+
+See all SSLCertificateFile directives for vhosts which has SSLEngine On
+~~~
+a2conf --cmd sslcertificatefile  --filter sslengine on
+~~~
+
+See all sites and documentroot for them (better then apache2ctl -S)
+~~~
+a2conf --vhfmt '{vhostargs} {servername} {documentroot}'
+~~~
+
+Which way is easier and error-prone to request certificate?
+~~~
+a2certbot --create -d example.com --aliases
+~~~
+or
+~~~~
+certbot certonly --webroot -w /var/www/website_1234 -d example.com -d www.example.com -d shop.example.com -d my.example.com
+~~~~
+a2certbot reads all needed data right from apache config. 
 
 # Installation
 Usual simple way:
