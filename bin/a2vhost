@@ -96,7 +96,6 @@ def make_both(apacheconfig, config,  domainlist, webroot, auto):
         cmd.append('-d')
         cmd.append(domain)
 
-    print("  {}".format(cmd))
     cp = subprocess.run(cmd)
     assert(cp.returncode == 0)
 
@@ -150,6 +149,8 @@ def make_basic(apacheconfig, config,  domainlist, webroot, auto):
         root.insert('')
     else:
         root = Node()
+
+    # TODO: add comment before VirtualHost
 
     new_vhost=Node(raw='<VirtualHost *:80>')
     new_vhost.insert('ServerName {}'.format(domainlist[0]))

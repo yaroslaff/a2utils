@@ -444,7 +444,13 @@ def main():
 
         print("Create cert for {}".format(name))
         aliases = get_aliases(args.domain, args.apacheconf) if args.aliases else list()
-        webroot = get_webroot(name, args.apacheconf)
+        
+        try:
+            webroot = get_webroot(name, args.apacheconf)
+        except StopIteration as e:
+            print("Cannot find webroot for {} (starting from {}). Maybe site is not yet created/enabled?".format(
+                name, args.apacheconf))
+            return
 
         # remove main name from aliases
         if name in aliases:
