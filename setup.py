@@ -9,7 +9,7 @@ def read(fname):
 
 setup(
     name='a2utils',
-    version='0.0.7',
+    version='0.0.8',
     scripts=[
         'bin/a2conf', 
         'bin/a2okerr', 
@@ -26,7 +26,7 @@ setup(
     long_description_content_type='text/markdown',
     author_email='yaroslaff@gmail.com',
     description='apache2 config file utilities',
-    install_requires=['a2conf>=0.2.25'],
+    install_requires=['a2conf>=0.3.0'],
 
     python_requires='>=3',
     classifiers=[

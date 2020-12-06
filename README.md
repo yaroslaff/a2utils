@@ -146,11 +146,17 @@ In the end we got this config file
 ```
 </details>
 
-Optionally, you can add any directive to any VirtualHost. We will add comment:
+Add any directive to any VirtualHost. We will add comment:
 ```shell
 # add directive
 sudo bin/a2vhost --add '# This site is main https site'  -d echo2.sysattack.com --vhost '*:443'
 ```
+
+Delete vhost:
+```shell
+a2vhost --delete --vhost '*:80' -d example.com
+```
+(you may add `-a /etc/apache2/apache2.conf` and/or `-c /etc/apache2/sites-available/example.com.conf` if your configuration is non-standard)
 
 ## a2conf
 ### Examples <!-- omit in toc -->
