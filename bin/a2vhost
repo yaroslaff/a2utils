@@ -6,7 +6,13 @@ import sys
 import subprocess
 import os
 
-class VhostNotFound(Exception):
+class MyException(Exception):
+    pass
+
+class VhostNotFound(MyException):
+    pass
+
+class ArgumentError(MyException):
     pass
 
 #
@@ -36,6 +42,9 @@ def get_vhconfig(apacheconfig, vhspec, domainlist):
     """
         return path to virtualhost apache config
     """
+
+    if not domainlist:
+        raise ArgumentError("Domain (-d) is required")
 
     root = Node(apacheconfig)
     root = Node(get_vhost_by_host(root, domainlist[0], vhspec).path)
@@ -219,8 +228,7 @@ def make_convert(apacheconfig, domainlist):
 def make_redirect(apacheconfig, domainlist):
     # sanity check 
     if not domainlist:
-        print("Specify at least one domain name: -d example.com")
-        sys.exit(1)
+        raise ArgumentError("Specify at least one domain name: -d example.com")
 
     # check maybe SSL host already exists
     root = Node(apacheconfig)
@@ -256,52 +264,55 @@ def make_redirect(apacheconfig, domainlist):
 
 def add_directive(apacheconfig, vhconfig, domain, vhspec, directive):
     
-    if not domain:
-        print("Domain (-d) is required")
-        return
-
-    if not vhconfig:
-        try:
-            vhconfig = get_vhconfig(apacheconfig, vhspec, domain)
-        except VhostNotFound as e:
-            print("Error:", e)
-            return
-
+    vhconfig = vhconfig or get_vhconfig(apacheconfig, vhspec, domain)
+    
     root = Node(vhconfig)
-    for vhost in root.children('<VirtualHost>'):
-        if vhspec and vhspec not in vhost.args:
-            continue
-        
-        vhnames = get_all_hostnames(vhost)
-        
-        # filter by domain
-        if domain:
-            for d in domain:
-                if d not in vhnames:
-                    print("SKIP", vhost, vhnames, d)
-                    return
-        
-        vhost.insert(directive)
-        root.write_file(root.path)
-        return
-        
+    vhost = get_vhost_by_host(root, domain[0],arg=vhspec)        
+    vhost.insert(directive)
+    root.write_file(root.path)
+
+def rm_directive(apacheconfig, vhconfig, domain, vhspec, directive):
+    
+    try:
+        cmd, args = directive.split(' ', maxsplit=1)
+    except ValueError:
+        cmd = directive
+        args = None
+
+    vhconfig = vhconfig or get_vhconfig(apacheconfig, vhspec, domain)
+    
+    root = Node(vhconfig)
+    vhost = get_vhost_by_host(root, domain[0],arg=vhspec)        
+    
+    deleted = list()
+    for n in vhost.children(cmd):
+        if args:
+            if args==n.args:
+                deleted.append(n)
+        else:
+            deleted.append(n)
+    
+    for n in deleted:
+        print("removed:", n, n.args)
+        n.delete()
+
+    root.write_file(root.path)
+
 def delete_vhost(apacheconfig, vhconfig, domain, vhspec):
-    if not domain:
-        print("Domain (-d) is required")
-        return
 
-    if not vhconfig:
-        try:
-            vhconfig = get_vhconfig(apacheconfig, vhspec, domain)
-        except VhostNotFound as e:
-            print("Error:", e)
-            return
-
+    vhconfig = vhconfig or get_vhconfig(apacheconfig, vhspec, domain)
     root = Node(vhconfig)
     vhost = get_vhost_by_host(root, domain[0],arg=vhspec)
     vhost.delete()
     root.write_file(root.path)
 
+def dump_vhost(apacheconfig, vhconfig, domain, vhspec):
+
+    vhconfig = vhconfig or get_vhconfig(apacheconfig, vhspec, domain)
+    
+    root = Node(vhconfig)
+    vhost = get_vhost_by_host(root, domain[0], arg=vhspec)
+    vhost.dump()
 
 def main():
 
@@ -309,9 +320,14 @@ def main():
 
     parser = argparse.ArgumentParser(description='Apache2 CLI vhost manager')
 
-    g = parser.add_argument_group('Commands')
+    g = parser.add_argument_group('Show vhost')
     g.add_argument('--list', default=False, action='store_true',
                    help='List VirtualHosts')
+    g.add_argument('--dump', default=False, action='store_true',
+                   help='Dump vhost content')
+
+    g = parser.add_argument_group('Manage vhosts')
+
     g.add_argument('--basic', default=False, action='store_true',
                    help='Create basic HTTP site (use: -c and --domain, --webroot)')
     g.add_argument('--convert', default=False, action='store_true',
@@ -320,11 +336,14 @@ def main():
                    help='Create HTTP --domain redirect vhost to HTTPS')
     g.add_argument('--both', default=False, action='store_true',
                    help='Create both http/https sites and request certificate')
-
-    g.add_argument('--add', metavar='DIRECTIVE',
-                   help='Add custom apache configuration directive to vhost')
     g.add_argument('--delete', default=False, action='store_true',
                    help='Delete vhost (use -d, --vhost and (optionally) -c/-a')
+
+    g = parser.add_argument_group('Manage vhost configuration')
+    g.add_argument('--add', metavar='DIRECTIVE', 
+                   help='Add custom apache configuration directive to vhost')
+    g.add_argument('--rm', metavar='DIRECTIVE', 
+                   help='Remove custom apache configuration directive to vhost')
 
     g = parser.add_argument_group('Options')
     g.add_argument('-a', '--apacheconfig', default=def_apacheconf, metavar='CONF',
@@ -341,19 +360,30 @@ def main():
 
     args = parser.parse_args()
 
-    if args.list:
-        list_vhosts(args.apacheconfig)
-    elif args.both:
-        make_both(args.apacheconfig, args.config,  args.domain, args.webroot, args.auto)
-    elif args.basic:
-        make_basic(args.apacheconfig, args.config,  args.domain, args.webroot, args.auto)
-    elif args.convert:
-        make_convert(args.apacheconfig, args.domain)
-    elif args.redirect:
-        make_redirect(args.apacheconfig, args.domain)
-    elif args.add:
-        add_directive(args.apacheconfig, args.config, args.domain, args.vhost, args.add)
-    elif args.delete:
-        delete_vhost(args.apacheconfig, args.config, args.domain, args.vhost)
+    try:
+        if args.list:
+            list_vhosts(args.apacheconfig)
+        elif args.dump:
+            dump_vhost(args.apacheconfig, args.config, args.domain, args.vhost)
+
+        elif args.basic:
+            make_basic(args.apacheconfig, args.config,  args.domain, args.webroot, args.auto)
+        elif args.both:
+            make_both(args.apacheconfig, args.config,  args.domain, args.webroot, args.auto)
+        elif args.convert:
+            make_convert(args.apacheconfig, args.domain)
+        elif args.redirect:
+            make_redirect(args.apacheconfig, args.domain)
+        elif args.delete:
+            delete_vhost(args.apacheconfig, args.config, args.domain, args.vhost)
+
+        elif args.add:
+            add_directive(args.apacheconfig, args.config, args.domain, args.vhost, args.add)
+        elif args.rm:
+            rm_directive(args.apacheconfig, args.config, args.domain, args.vhost, args.rm)
+
+    except (MyException) as e:
+        print("Error:", e)
+        return
 
 main()
