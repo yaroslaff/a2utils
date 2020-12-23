@@ -452,13 +452,21 @@ def main():
                 name, args.apacheconf))
             return
 
-        # remove main name from aliases
-        if name in aliases:
-            aliases.remove(name)
-
         cmd = ['certbot', 'certonly', '--webroot', '-w', webroot, '-d', name]
-        for alias in aliases:
-            cmd.extend(['-d', alias])
+
+        if args.aliases:
+            # add all aliases
+            # remove main name from aliases
+            if name in aliases:
+                aliases.remove(name)
+            for alias in aliases:
+                cmd.extend(['-d', alias])
+        else:
+            # add all other names
+            for domain in args.domain[1:]:
+                cmd.extend(['-d', domain])
+
+
         print("RUNNING: {}".format(' '.join(cmd)))
         cp = subprocess.run(cmd)
         sys.exit(cp.returncode)
