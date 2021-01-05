@@ -340,8 +340,7 @@ def check_vhosts(config, localip, verbose):
             errors.append("no document root")
         else:
             if not os.path.isdir(droot_node.args):
-                # errors.append("missing document root {}".format(droot_node.args))
-                pass
+                errors.append("missing document root {}".format(droot_node.args))
 
         failed_list=list()
         ok_list=list()
