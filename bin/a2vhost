@@ -306,12 +306,14 @@ def delete_vhost(apacheconfig, vhconfig, domain, vhspec):
     vhost.delete()
     root.write_file(root.path)
 
-def dump_vhost(apacheconfig, vhconfig, domain, vhspec):
+def dump_vhost(apacheconfig, vhconfig, domain, vhspec, verbose=False):
 
     vhconfig = vhconfig or get_vhconfig(apacheconfig, vhspec, domain)
     
     root = Node(vhconfig)
     vhost = get_vhost_by_host(root, domain[0], arg=vhspec)
+    if verbose:
+        print(f'# {vhost.path}:{vhost.line}')
     vhost.dump()
 
 def main():
@@ -352,6 +354,8 @@ def main():
                    help='VirtualHost config file.')
     g.add_argument('-w', '--webroot', default=None, metavar='PATH',
                    help='Webroot (DocumentRoot) for new site')
+    g.add_argument('-v', '--verbose', default=False, action='store_true',
+                   help='Be verbose')
     g.add_argument('-d', '--domain', nargs='*', metavar='DOMAIN', help='hostname/domain(s) for new website')
     g.add_argument('--vhost', metavar='VHOST', help='Process only this vhost (e.g. *:80)')
     g.add_argument('--auto', default=False, action='store_true', help='Autogenerate/guess missing params " \
@@ -364,7 +368,7 @@ def main():
         if args.list:
             list_vhosts(args.apacheconfig)
         elif args.dump:
-            dump_vhost(args.apacheconfig, args.config, args.domain, args.vhost)
+            dump_vhost(args.apacheconfig, args.config, args.domain, args.vhost, verbose=args.verbose)
 
         elif args.basic:
             make_basic(args.apacheconfig, args.config,  args.domain, args.webroot, args.auto)
