@@ -313,7 +313,7 @@ def dump_vhost(apacheconfig, vhconfig, domain, vhspec, verbose=False):
     root = Node(vhconfig)
     vhost = get_vhost_by_host(root, domain[0], arg=vhspec)
     if verbose:
-        print(f'# {vhost.path}:{vhost.line}')
+        print('# {path}:{line}'.format(path=vhost.path, line=vhost.line))
     vhost.dump()
 
 def main():
