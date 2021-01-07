@@ -334,6 +334,9 @@ def check_vhosts(config, localip, verbose):
         servername = vhost.first('servername')
         vhnames = get_all_hostnames(vhost)
 
+        if verbose:
+            print(".. check", title(vhost))
+
         errors = list()
 
         if droot_node is None:
@@ -356,13 +359,15 @@ def check_vhosts(config, localip, verbose):
             else:
                 if all(i in localip for i in addresses):
                     ok_list.append(host)
+                    if verbose:
+                        print(".. host {} is valid".format(host))
                 else:
                     failedhost += 1
                     failed_list.append(host)
                     errors.append("hostname {} points to other IP {}".format(host, addresses))
                 
 
-        if failedhost>0:
+        if failedhost>0 or verbose:
             errors.append("{}/{} hosts failed. failed: {} works: {}".format(failedhost, len(vhnames), failed_list, ok_list))
 
         if errors:

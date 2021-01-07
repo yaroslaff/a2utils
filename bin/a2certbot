@@ -443,7 +443,6 @@ def main():
         name = args.domain[0]
 
         print("Create cert for {}".format(name))
-        aliases = get_aliases(args.domain, args.apacheconf) if args.aliases else list()
         
         try:
             webroot = get_webroot(name, args.apacheconf)
@@ -451,6 +450,8 @@ def main():
             print("Cannot find webroot for {} (starting from {}). Maybe site is not yet created/enabled?".format(
                 name, args.apacheconf))
             return
+
+        aliases = get_aliases(args.domain, args.apacheconf) if args.aliases else list()
 
         cmd = ['certbot', 'certonly', '--webroot', '-w', webroot, '-d', name]
 
