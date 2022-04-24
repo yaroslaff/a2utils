@@ -26,7 +26,7 @@ setup(
     long_description_content_type='text/markdown',
     author_email='yaroslaff@gmail.com',
     description='apache2 config file utilities',
-    install_requires=['a2conf>=0.3.0'],
+    install_requires=['a2conf>=0.3.1'],
 
     python_requires='>=3',
     classifiers=[
