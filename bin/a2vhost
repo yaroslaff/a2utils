@@ -379,6 +379,29 @@ def check_vhosts(config, localip, verbose):
             print()
 
 
+def list_aliases(config, domainlist, vhspec):
+    root = Node(config)
+    maindomain = domainlist[0]
+    allnames = set()
+
+    for domain in domainlist:
+        vhost = get_vhost_by_host(root, domain, arg=vhspec)
+        allnames.update(get_all_hostnames(vhost))
+
+    allnames.remove(maindomain)
+    outlist = [ maindomain ]
+    outlist.extend(allnames)
+    print(' '.join(outlist))
+
+    """
+    for vhost in root.children('<VirtualHost>'):
+        droot_node = vhost.first('documentroot')
+        servername = vhost.first('servername')
+        vhnames = get_all_hostnames(vhost)
+    """
+
+
+
 
 def main():
 
@@ -393,6 +416,8 @@ def main():
                    help='Dump vhost content')
     g.add_argument('--check', default=False, action='store_true',
                    help='Check all vhosts for typical config problems')
+    g.add_argument('--aliases', default=False, action='store_true',
+                   help='Show all hostnames for --domain(s)')
 
     g = parser.add_argument_group('Manage vhosts')
 
@@ -415,7 +440,7 @@ def main():
 
     g = parser.add_argument_group('Options')
     g.add_argument('-a', '--apacheconfig', default=def_apacheconf, metavar='CONF',
-                   help='Main apache config file. def: {}'.format(None))
+                   help='Main apache config file. def: {}'.format(def_apacheconf))
     g.add_argument('-c', '--config', default=None, metavar='VHOST_CONF',
                    help='VirtualHost config file.')
     g.add_argument('-w', '--webroot', default=None, metavar='PATH',
@@ -454,6 +479,8 @@ def main():
             add_directive(args.apacheconfig, args.config, args.domain, args.vhost, args.add)
         elif args.rm:
             rm_directive(args.apacheconfig, args.config, args.domain, args.vhost, args.rm)
+        elif args.aliases:
+            list_aliases(args.apacheconfig, args.domain, args.vhost)
 
     except (MyException) as e:
         print("Error:", e)

@@ -10,10 +10,13 @@ import random
 import string
 import sys
 import subprocess
+import pathlib
 
-from a2conf import Node
+from a2conf import Node, VhostNotFound
 
 log = None
+
+
 
 class FatalError(Exception):
     pass
@@ -183,7 +186,7 @@ def is_local_ip(hostname, local_ip_list, report):
         else:
             report.problem('{} ({}) not local {}'.format(hostname, ip, local_ip_list))
 
-def get_all_hostnames(hostname, apacheconf, root=None):
+def get_all_hostnames(hostname, apacheconf=None, root=None):
     names = list()
     vhost = next(yield_vhost(hostname, apacheconf, root=root))
     servername = next(vhost.children('ServerName')).args
@@ -198,7 +201,7 @@ def get_webroot(hostname, apacheconf, root=None):
     return next(vhost.children('DocumentRoot')).args
 
 
-def yield_vhost(domain, apacheconf, root=None):
+def yield_vhost(domain, apacheconf=None, root=None):
     if root is None:
         root = a2conf.Node()
         root.read_file(apacheconf)
@@ -343,6 +346,40 @@ def get_aliases(names, apacheconf):
 
     return set(aliases)
 
+
+def place(apacheconfig, token, validation, domain):
+    root = Node(apacheconfig)
+    try:
+        vhost = root.find_vhost(domain)
+        droot = vhost.first('DocumentRoot').args
+        token_dir = os.path.join(droot, '.well-known', 'acme-challenge')
+        token_path = os.path.join(token_dir, token) 
+        # create dir if needed
+        pathlib.Path(token_dir).mkdir(parents=True, exist_ok=True)
+
+        with open(token_path, "w") as fh:
+            fh.write(validation)
+        print(f"{domain} {token}")
+    except VhostNotFound:
+        print(f"Not found vhost for {domain}")
+        return
+
+def cleanup(apacheconfig, token, domain):
+    root = Node(apacheconfig)
+    try:
+        vhost = root.find_vhost(domain)
+        droot = vhost.first('DocumentRoot').args
+        token_dir = os.path.join(droot, '.well-known', 'acme-challenge')
+        token_path = os.path.join(token_dir, token) 
+        if os.path.isfile(token_path):
+            print("Remove token", token_path)
+            os.unlink(token_path)
+        
+    except VhostNotFound:
+        print(f"Not found vhost for {domain}")
+        return
+
+
 def main():
     global log
 
@@ -373,7 +410,8 @@ def main():
     g = parser.add_argument_group('Check existent LetsEncrypt verification (if "certbot renew" fails)')
     g.add_argument('--host', default=None, metavar='HOST',
                    help='Process only letsencrypt config file for HOST. def: {}'.format(None))
-    g.add_argument(default=def_lepath, nargs='?', dest='lepath', metavar='LETSENCRYPT_DIR_PATH',
+    g.add_argument('--process', default=False, action='store_true', help='Process all letsencrypt certificates')
+    g.add_argument('--lepath', default=def_lepath, nargs='?', dest='lepath', metavar='LETSENCRYPT_DIR_PATH',
                    help='Lets Encrypt directory def: {}'.format(def_lepath))
 
     g = parser.add_argument_group('Check non-existent LetsEncrypt verification (if "certbot certonly --webroot" fails)')
@@ -394,6 +432,8 @@ def main():
                    default=False, help='quiet mode, suppress output for sites without problems')
     g.add_argument('-i', '--ip', nargs='*',
                    help='Default addresses. Autodetect if not specified')
+    g.add_argument(metavar='CERTBOT_OPTS', nargs='*', dest='opts',
+                   help='options to pass to certbot, e.g. --test-cert')
 
     g = parser.add_argument_group('Generate new certificate (certbot certonly --webroot)')
     g.add_argument('--create', default=False, action='store_true',
@@ -401,6 +441,12 @@ def main():
     g.add_argument('--aliases', action='store_true',
                    default=False, help='Include all ServerName and ServerAlias found in VirtualHost')
     g.add_argument('--root', default=None, metavar='DocumentRoot', dest='docroot', help='DocumentRoot for HTTP site (if --create both)')
+
+    g = parser.add_argument_group('Assisting in  (certbot certonly --manual)')
+    g.add_argument('--place', nargs=2, metavar=('CERTBOT_TOKEN', 'CERTBOT_VALIDATION'),
+                   help='place validation value into token file')
+    g.add_argument('--cleanup', metavar='CERTBOT_TOKEN', help='cleanup validation token')
+
 
     args = parser.parse_args()
 
@@ -467,13 +513,19 @@ def main():
             for domain in args.domain[1:]:
                 cmd.extend(['-d', domain])
 
+        if args.opts:
+            cmd.extend(args.opts)
 
         print("RUNNING: {}".format(' '.join(cmd)))
         cp = subprocess.run(cmd)
         sys.exit(cp.returncode)
 
+    elif args.place:
+        place(args.apacheconf, args.place[0], args.place[1], args.domain[0])
+    elif args.cleanup:
+        cleanup(args.apacheconf, args.cleanup, args.domain[0])
 
-    elif os.path.isdir(args.lepath):
+    elif args.process and os.path.isdir(args.lepath):
         for f in os.listdir(args.lepath):
             path = os.path.join(args.lepath, f)
             if not path.endswith('.conf'):
@@ -481,8 +533,10 @@ def main():
             if not (os.path.isfile(path) or os.path.islink(path)):
                 continue
             process_file(leconf_path=path, local_ip_list=local_ip_list, args=args)
-    else:
+    elif args.process and os.path.isfile(args.lepath):
         process_file(leconf_path=args.lepath, local_ip_list=local_ip_list, args=args)
+    else:
+        print("Need command")
 
 
 main()
