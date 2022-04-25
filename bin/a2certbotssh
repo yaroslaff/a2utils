@@ -73,8 +73,8 @@ def cleanup():
     sshcmd = os.getenv('A2UTILS_SSH').split(' ')
 
     cmd = [ 'ssh', *sshcmd ] + ['a2certbot', '-d', domain, '--cleanup', token ]
-    print("cleanup cmd:", cmd)
-    time.sleep(20)
+    # print("cleanup cmd:", cmd)
+    # time.sleep(20)
     subprocess.run(cmd)
 
 def main():
