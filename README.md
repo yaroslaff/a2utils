@@ -9,6 +9,7 @@
     - [Requesting new certificate and troubleshooting](#requesting-new-certificate-and-troubleshooting)
     - [Troubleshooting renew certificates](#troubleshooting-renew-certificates)
     - [a2certbot warnings (false positives)](#a2certbot-warnings-false-positives)
+  - [a2certbotssh](#a2certbotssh)
   - [a2okerr](#a2okerr)
 
 
