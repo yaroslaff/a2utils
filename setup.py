@@ -11,9 +11,10 @@ setup(
     name='a2utils',
     version='0.0.18',
     scripts=[
-        'bin/a2conf', 
-        'bin/a2okerr', 
-        'bin/a2certbot', 
+        'bin/a2conf',
+        'bin/a2okerr',
+        'bin/a2certbot',
+        'bin/a2certbotssh',
         'bin/a2vhost'
         ],
 
