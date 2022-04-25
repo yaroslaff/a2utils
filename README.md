@@ -307,6 +307,17 @@ To avoid such false positive, do not use such 'blind' redirection, better use th
 This code in `<VirtuaHost *:80>` context will redirect all requests to HTTPS site EXCEPT LetsEncrypt verification 
 requests.
 
+## a2certbotssh
+
+`a2certbotssh` is wrapper to get certificates using remote machines for verification. Remote machine must have a2utils installed.
+**Example:**
+(any machine):
+~~~
+bin/a2certbotssh --aliases --ssh root@example.com -d example.com
+~~~
+With this command it will run `certbot certonly --manual ...` using itself as hooks, to place (and cleanup) validation hooks on remote machine. If `--aliases` given, it will request all aliases for this virtualhost. For example, also www.example.com and new.example.com. If `--test-cert` is given, staging server is used (staging server has much higher rate limits, useful for testing)
+
+
 ## a2okerr
 a2okerr is useful only if you are using [okerr](https://okerr.com/): free and open source hybrid (host/network) monitoring system. 
 
