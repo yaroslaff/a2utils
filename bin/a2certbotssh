@@ -79,6 +79,15 @@ def cleanup():
 
 def main():
     args = get_args()
+
+    if not args.domain:
+        print("Need domain(s) (-d)")
+        return
+
+    if not args.ssh:
+        args.ssh = [ 'ssh', f'root@{args.domain[0]}' ]
+        print(f"--ssh not set, using {' '.join(args.ssh)}")
+
     if args.aliases:
         args.domain = process_aliases(args.ssh, args.domain)
 
