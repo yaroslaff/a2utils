@@ -84,22 +84,24 @@ def cleanup():
 def main():
     args = get_args()
 
-    if not args.domain:
-        print("Need domain(s) (-d)")
-        return
-
-    if not args.ssh:
-        args.ssh = [ f'root@{args.domain[0]}' ]
-        print(f"--ssh not set, using --ssh {' '.join(args.ssh)}")
-
-    if args.aliases:
-        args.domain = process_aliases(args.ssh, args.domain)
 
     # print(f"args: {args}")
     # printenv()
 
     role = get_role()
     if role == 'wrapper':
+
+        if args.aliases:
+            args.domain = process_aliases(args.ssh, args.domain)
+
+        if not args.domain:
+            print("Need domain(s) (-d)")
+            return
+
+        if not args.ssh:
+            args.ssh = [ f'root@{args.domain[0]}' ]
+            print(f"--ssh not set, using --ssh {' '.join(args.ssh)}")
+
         certbot_wrapper(args.ssh, args.domain, args.test_cert)
     elif role == 'place':
         place()
