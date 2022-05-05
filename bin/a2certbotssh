@@ -3,6 +3,7 @@
 import argparse
 import subprocess
 import os
+import sys
 import time
 
 def get_args():
@@ -27,6 +28,9 @@ def process_aliases(ssh, domain):
     cmd.extend(ssh)
     cmd.extend(['a2vhost', '-d', *domain, '--aliases'])
     out = subprocess.run(cmd, capture_output=True)
+    if out.returncode:
+        print("Failed to get aliases")
+        sys.exit(1)
     aliases = out.stdout.decode().strip().split(' ')
     return aliases
 
@@ -85,8 +89,8 @@ def main():
         return
 
     if not args.ssh:
-        args.ssh = [ 'ssh', f'root@{args.domain[0]}' ]
-        print(f"--ssh not set, using {' '.join(args.ssh)}")
+        args.ssh = [ f'root@{args.domain[0]}' ]
+        print(f"--ssh not set, using --ssh {' '.join(args.ssh)}")
 
     if args.aliases:
         args.domain = process_aliases(args.ssh, args.domain)
