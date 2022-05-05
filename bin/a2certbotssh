@@ -18,7 +18,6 @@ def get_args():
 
 
 def printenv():
-    print(f"PID: {os.getpid()}")
     for k, v in os.environ.items():
         if k.startswith('CERTBOT') or k.startswith('A2UTILS'):
             print(k,v)
@@ -85,9 +84,6 @@ def main():
     args = get_args()
 
 
-    # print(f"args: {args}")
-    # printenv()
-
     role = get_role()
     if role == 'wrapper':
 
@@ -96,8 +92,8 @@ def main():
             return
 
         if not args.ssh:
-            args.ssh = [ f'root@{args.domain[0]}' ]
-            print(f"--ssh not set, using --ssh {' '.join(args.ssh)}")
+            args.ssh = [ 'root@' + args.domain[0] ]
+            print("--ssh not set, using --ssh " + ' '.join(args.ssh))
 
         if args.aliases:
             args.domain = process_aliases(args.ssh, args.domain)

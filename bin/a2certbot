@@ -359,9 +359,9 @@ def place(apacheconfig, token, validation, domain):
 
         with open(token_path, "w") as fh:
             fh.write(validation)
-        print(f"{domain} {token}")
+        print(domain +" " + token)
     except VhostNotFound:
-        print(f"Not found vhost for {domain}")
+        print("Not found vhost for {}".format(domain))
         return
 
 def cleanup(apacheconfig, token, domain):
@@ -376,7 +376,7 @@ def cleanup(apacheconfig, token, domain):
             os.unlink(token_path)
         
     except VhostNotFound:
-        print(f"Not found vhost for {domain}")
+        print("Not found vhost for {}".format(domain))
         return
 
 
