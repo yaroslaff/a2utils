@@ -491,7 +491,7 @@ def main():
 
     elif args.create:
 
-        if not args.domain:
+        if not args.domain and not args.altnames:
             print("--domain requires at least one -d and optional --aliases")
             sys.exit(1)
 
