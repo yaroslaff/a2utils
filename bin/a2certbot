@@ -11,6 +11,7 @@ import string
 import sys
 import subprocess
 import pathlib
+import ssl
 
 from a2conf import Node, VhostNotFound
 
@@ -453,6 +454,7 @@ def main():
                    help='place validation value into token file')
     g.add_argument('--challenge-path', '-p', help='Optional path to token directory (/something/.well-known/acme-challenge/)')
     g.add_argument('--cleanup', metavar='CERTBOT_TOKEN', help='cleanup validation token')
+    g.add_argument('--altnames', metavar='CERT.PEM', help='list altnames for certificate')
 
 
     args = parser.parse_args()
@@ -540,6 +542,15 @@ def main():
             challenge_dir=args.challenge_path, 
             token=args.cleanup, 
             domain=args.domain[0])
+
+    elif args.altnames:
+        crt = ssl._ssl._test_decode_cert(args.altnames)
+        altnames = [t[1] for t in crt['subjectAltName'] if t[0] == 'DNS']
+        subject = dict(x[0] for x in crt['subject'])
+        cn = subject['commonName']
+        altnames.remove(cn)
+        altnames.insert(0, cn)
+        print(' '.join(altnames))
 
     elif args.process and os.path.isdir(args.lepath):
         for f in os.listdir(args.lepath):

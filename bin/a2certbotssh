@@ -11,6 +11,7 @@ def get_args():
     parser.add_argument('--ssh', nargs='+', help='SSH arguments, e.g.  --ssh root@example.com')
     parser.add_argument('-d','--domain', nargs='+', help='Domain name to generate certificate')
     parser.add_argument('--aliases', default=False, action='store_true')
+    parser.add_argument('--altnames', metavar='CERT.pem', help='Path to remote cert to extract all altnames')
     parser.add_argument('--test-cert', default=False, action='store_true')
     parser.add_argument('--challenge-path', '-p', help='Optional path to token directory (/something/.well-known/acme-challenge/)')
     
@@ -33,6 +34,19 @@ def process_aliases(ssh, domain):
         sys.exit(1)
     aliases = out.stdout.decode().strip().split(' ')
     return aliases
+
+def process_altnames(ssh, path):
+    cmd = ['ssh']
+    cmd.extend(ssh)
+    cmd.extend(['a2certbot', '--altnames', path])
+    out = subprocess.run(cmd, capture_output=True)
+    if out.returncode:
+        print("Failed to get altnames")
+        sys.exit(1)
+    aliases = out.stdout.decode().strip().split(' ')
+    return aliases
+
+
 
 def certbot_wrapper(ssh, domain, challenge_dir, test_cert):
     test_options = ['--test-cert'] if test_cert else list()
@@ -106,6 +120,9 @@ def main():
 
         if args.aliases:
             args.domain = process_aliases(args.ssh, args.domain)
+
+        elif args.altnames:
+            args.domain = process_altnames(args.ssh, args.altnames)
 
 
         certbot_wrapper(
