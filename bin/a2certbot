@@ -559,7 +559,7 @@ def main():
         pemfile = args.recreate
         print("recreate", pemfile)
         names = get_altnames(pemfile)
-        webroot = args.webroot or get_webroot(args.domain[0], args.apacheconf)
+        webroot = args.webroot or get_webroot(args.names[0], args.apacheconf)
         print(f"cert for {altnames} webroot {webroot}")
         mkcert(webroot, names)
 
