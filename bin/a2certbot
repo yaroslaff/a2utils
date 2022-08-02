@@ -385,7 +385,31 @@ def cleanup(apacheconfig, challenge_dir, token, domain):
     if os.path.isfile(token_path):
         print("Remove token", token_path)
         os.unlink(token_path)
-        
+
+
+def get_altnames(path):
+        crt = ssl._ssl._test_decode_cert(path)
+        altnames = [t[1] for t in crt['subjectAltName'] if t[0] == 'DNS']
+        subject = dict(x[0] for x in crt['subject'])
+        cn = subject['commonName']
+        altnames.remove(cn)
+        altnames.insert(0, cn)
+        return altnames
+
+def mkcert(webroot, names, opts=None):
+
+    cmd = ['certbot', 'certonly', '--webroot', '-w', webroot]
+
+    for n in names:
+        cmd.extend(['-d', n])
+    
+    if opts:
+        cmd.extend(opts)
+
+    print("RUNNING: {}".format(' '.join(cmd)))
+    cp = subprocess.run(cmd)
+    return cp.returncode
+
 
 def main():
     global log
@@ -445,9 +469,11 @@ def main():
     g = parser.add_argument_group('Generate new certificate (certbot certonly --webroot)')
     g.add_argument('--create', default=False, action='store_true',
                    help='Create LetsEncrypt certificate (via certbot). Use also -d and --aliases')
+    g.add_argument('--recreate', metavar='CERT.pem',
+                   help='Re-create certificate, use names from PATH, and webroot from apache config or --webroot')
     g.add_argument('--aliases', action='store_true',
                    default=False, help='Include all ServerName and ServerAlias found in VirtualHost')
-    g.add_argument('--root', default=None, metavar='DocumentRoot', dest='docroot', help='DocumentRoot for HTTP site (if --create both)')
+    # g.add_argument('--root', default=None, metavar='DocumentRoot', dest='docroot', help='DocumentRoot for HTTP site (if --create both)')
 
     g = parser.add_argument_group('Assisting in  (certbot certonly --manual)')
     g.add_argument('--place', nargs=2, metavar=('CERTBOT_TOKEN', 'CERTBOT_VALIDATION'),
@@ -529,6 +555,14 @@ def main():
         cp = subprocess.run(cmd)
         sys.exit(cp.returncode)
 
+    elif args.recreate:
+        pemfile = args.recreate
+        print("recreate", pemfile)
+        names = get_altnames(pemfile)
+        webroot = args.webroot or get_webroot(args.domain[0], args.apacheconf)
+        print(f"cert for {altnames} webroot {webroot}")
+        mkcert(webroot, names)
+
     elif args.place:
         place(
             apacheconfig=args.apacheconf, 
@@ -544,12 +578,8 @@ def main():
             domain=args.domain[0])
 
     elif args.altnames:
-        crt = ssl._ssl._test_decode_cert(args.altnames)
-        altnames = [t[1] for t in crt['subjectAltName'] if t[0] == 'DNS']
-        subject = dict(x[0] for x in crt['subject'])
-        cn = subject['commonName']
-        altnames.remove(cn)
-        altnames.insert(0, cn)
+
+        altnames = get_altnames(args.altnames)
         print(' '.join(altnames))
 
     elif args.process and os.path.isdir(args.lepath):
