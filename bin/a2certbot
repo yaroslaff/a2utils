@@ -18,7 +18,6 @@ from a2conf import Node, VhostNotFound
 log = None
 
 
-
 class FatalError(Exception):
     pass
 
@@ -225,8 +224,8 @@ def yield_vhost(domain, apacheconf=None, root=None):
             if domain.lower() in map(str.lower, alias.args.split(' ')):
                 # return vhost
                 yield vhost
-
-    return None
+    raise VhostNotFound('Not found vhost {}'.format(domain))
+    # return None
 
 def process_file(leconf_path, local_ip_list, args, leconf=None):
 
@@ -559,7 +558,11 @@ def main():
         pemfile = args.recreate
         print("recreate", pemfile)
         names = get_altnames(pemfile)
-        webroot = args.webroot or get_webroot(names[0], args.apacheconf)
+        try:
+            webroot = args.webroot or get_webroot(names[0], args.apacheconf)
+        except VhostNotFound as e:
+            print(e)
+            sys.exit(1)
         print(f"cert for {names} webroot {webroot}")
         mkcert(webroot, names)
 
