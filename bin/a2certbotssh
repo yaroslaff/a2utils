@@ -110,7 +110,7 @@ def main():
     role = get_role()
     if role == 'wrapper':
 
-        if not args.domain:
+        if not args.domain and not args.altnames:
             print("Need domain(s) (-d)")
             return
 

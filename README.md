@@ -44,6 +44,13 @@ See all sites and documentroot for them (better then apache2ctl -S)
 a2conf --vhfmt '{vhostargs} {servername} {documentroot}'
 ~~~
 
+If you created/deleted apache vhosts, but have orphaned LE certificates:
+~~~
+a2conf --cmd sslcertificatefile| cut -f 2 -d" " | sort | uniq > /tmp/apache-certs.txt
+find /etc/letsencrypt/live/ -name fullchain.pem|sort > /tmp/le-certs.txt
+diff /tmp/apache-certs.txt /tmp/le-certs.txt
+~~~
+
 Which way is easier and error-prone to request certificate?
 ~~~
 a2certbot --create -d example.com --aliases
