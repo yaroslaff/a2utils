@@ -158,6 +158,11 @@ def make_basic(apacheconfig, config,  domainlist, webroot, auto):
                     .format(domainlist[0]))
             sys.exit(1)
 
+    # create webroot if needed
+    if not os.path.exists(webroot):
+        print('# no webroot {webroot}, mkdir it'.format(webroot))
+        os.mkdir(webroot)
+
 
     # check maybe it exists
     root = Node(apacheconfig)
