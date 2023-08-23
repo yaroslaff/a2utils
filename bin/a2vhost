@@ -80,7 +80,7 @@ def list_vhosts(apacheconf):
             
         print(vhost.path+':'+str(vhost.line), vhost.args, docroot, ' '.join(hostnames))
 
-def make_both(apacheconfig, config,  domainlist, webroot, auto):
+def make_both(apacheconfig: str, config: str,  domainlist: list, webroot: str, test: bool, auto: bool):
 
     def reload():
         print(".. reload")
@@ -107,6 +107,11 @@ def make_both(apacheconfig, config,  domainlist, webroot, auto):
 
     print(".. request certificate")
     cmd = [ 'certbot', 'certonly', '--webroot', '-w', webroot ]
+
+    if test:
+        print("use --test-cert")
+        cmd.append('--test-cert')
+
     for domain in domainlist:
         cmd.append('-d')
         cmd.append(domain)
@@ -457,6 +462,7 @@ def main():
     g.add_argument('--auto', default=False, action='store_true', help='Autogenerate/guess missing params " \
         "(config file name, create missing directories)')
     g.add_argument('--localip', metavar='IPv4', nargs='+', help='Local IP address(es) for --check')
+    g.add_argument('--test', action='store_true', default=False, help='Use --test-cert for certbot (request cert from staging environment)')
 
 
     args = parser.parse_args()
@@ -472,7 +478,7 @@ def main():
         elif args.basic:
             make_basic(args.apacheconfig, args.config,  args.domain, args.webroot, args.auto)
         elif args.both:
-            make_both(args.apacheconfig, args.config,  args.domain, args.webroot, args.auto)
+            make_both(args.apacheconfig, args.config,  args.domain, webroot=args.webroot, test=args.test, auto=args.auto)
         elif args.convert:
             make_convert(args.apacheconfig, args.domain)
         elif args.redirect:
