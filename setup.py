@@ -9,7 +9,7 @@ def read(fname):
 
 setup(
     name='a2utils',
-    version='0.0.35',
+    version='0.0.36',
     scripts=[
         'bin/a2conf',
         'bin/a2okerr',

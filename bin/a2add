@@ -45,8 +45,12 @@ def shortname(vhost: Node) -> str:
 
     
 def add(vhost: Node, directive: str, overwrite: bool):
+    try:    
+        servername = vhost.first('servername').args
+    except AttributeError:
+        # print(f"No servername in (default?) vhost {vhost} {vhost.path}:{vhost.line}")
+        return
     
-    servername = vhost.first('servername').args
     short = shortname(vhost)
     
     dir1 = directive.split(' ')[0]    
