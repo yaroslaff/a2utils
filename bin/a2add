@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+
+import argparse
+
+from a2conf import Node
+
+def get_args():
+
+    def_apacheconf = '/etc/apache2/apache2.conf'
+
+    parser = argparse.ArgumentParser(description='Apache2 add directive to vhosts')
+
+    g = parser.add_argument_group('Domain specification')
+
+    parser.add_argument('-d', '--domain', metavar='DOMAIN', help='fix this domain name')
+    parser.add_argument('--all', default=False, action='store_true', help='fix this domain name')
+    parser.add_argument('directive', metavar='DIRECTIVE', help='Directive. May use {servername} or {name}')
+
+    g = parser.add_argument_group('Options')
+    g.add_argument('-a', '--apacheconfig', default=def_apacheconf, metavar='CONF',
+                   help='Main apache config file. def: {}'.format(def_apacheconf))
+    g.add_argument('-c', '--config', default=None, metavar='VHOST_CONF',
+                   help='VirtualHost config file.')
+    g.add_argument('--overwrite', default=False, action='store_true',
+                   help='Process even vhosts with logging')
+
+
+
+    return parser.parse_args()
+
+def shortname(vhost: Node) -> str:
+    """ return shortname for node. e.g. return example.com IF servername is foo.example.com AND example.com somewhere in aliases. Otherwise return servername as-is """
+    servername = vhost.first('servername').args
+    if len(servername.split('.')) != 3:
+        return servername
+
+    short = '.'.join(servername.split('.')[1:])
+    try:
+        aliases = vhost.first('serveralias').args.split(' ')
+    except AttributeError:
+        return servername
+    if short in aliases:
+        return short
+    return servername
+
+    
+def add(vhost: Node, directive: str, overwrite: bool):
+    
+    servername = vhost.first('servername').args
+    short = shortname(vhost)
+    
+    dir1 = directive.split(' ')[0]    
+
+    found_directive = vhost.first(dir1)
+
+    if found_directive:
+        if overwrite:
+            print(f"Delete directive {found_directive} from {servername} {vhost.args} {vhost.path}")
+            found_directive.delete()
+        else:
+            print(f"Skip vhost {servername} {vhost.args} {vhost.path} : already has {directive}")
+            return
+
+    directive = directive.format(servername=servername, name=short)
+    
+    vhost.insert(directive)
+    print(f"Fix {servername} {vhost.args} {vhost.path} ({directive})")
+    vhost.save_file()
+
+def main():
+    args = get_args()
+    root = Node(args.apacheconfig)
+    
+    if args.domain:
+        for vhost in root.yield_vhost(args.domain):
+            add(vhost, args.directive, args.overwrite)
+    elif args.all:
+        for vhost in root.children('<VirtualHost>'):
+            add(vhost, args.directive, args.overwrite)
+    else:
+        print("Need either -d example.com or --all")
+
+    # root = Node(get_vhost_by_host(root, domainlist[0], vhspec).path)
+    # return root.path
+
+if __name__ == '__main__':
+    main()

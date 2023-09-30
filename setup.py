@@ -9,13 +9,14 @@ def read(fname):
 
 setup(
     name='a2utils',
-    version='0.0.33',
+    version='0.0.34',
     scripts=[
         'bin/a2conf',
         'bin/a2okerr',
         'bin/a2certbot',
         'bin/a2certbotssh',
-        'bin/a2vhost'
+        'bin/a2vhost',
+        'bin/a2add'
         ],
 
     # install_requires=[],
@@ -27,7 +28,7 @@ setup(
     long_description_content_type='text/markdown',
     author_email='yaroslaff@gmail.com',
     description='apache2 config file utilities',
-    install_requires=['a2conf>=0.3.1'],
+    install_requires=['a2conf>=0.3.4'],
 
     python_requires='>=3',
     classifiers=[
