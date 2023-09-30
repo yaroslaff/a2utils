@@ -62,7 +62,7 @@ def add(vhost: Node, directive: str, overwrite: bool):
             print(f"Delete directive {found_directive} from {servername} {vhost.args} {vhost.path}")
             found_directive.delete()
         else:
-            print(f"Skip vhost {servername} {vhost.args} {vhost.path} : already has {found_directive}")
+            print(f"Skip vhost {servername} {vhost.args} {vhost.path} : already has {found_directive} {found_directive.args}")
             return
 
     directive = directive.format(servername=servername, name=short)
